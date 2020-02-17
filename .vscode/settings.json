@@ -1,3 +1,10 @@
 {
-    "python.pythonPath": "/home/chenkaixu/venv/bin/python3.6"
+    "python.pythonPath": "/home/chenkaixu/venv/bin/python3.6",
+    "python.venvPath": "/home/chenkaixu/venv",
+
+    "python.linting.pylintPath": "pylint",
+    "python.linting.pylintArgs": [
+            "--load-plugins", "pylint_django"
+        ],
+    "python.formatting.autopep8Path": "autopep8"
 }
