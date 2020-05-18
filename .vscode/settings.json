@@ -1,6 +1,4 @@
 {
-    "python.pythonPath": "/home/chenkaixu/anaconda3/bin/python",
-    "python.venvPath": "/home/chenkaixu/venv",
 
     "python.linting.pylintPath": "pylint",
     "python.linting.pylintArgs": [
