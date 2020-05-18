@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/chenkaixu/venv/bin/python3.6",
+    "python.pythonPath": "/home/chenkaixu/anaconda3/bin/python",
     "python.venvPath": "/home/chenkaixu/venv",
 
     "python.linting.pylintPath": "pylint",
