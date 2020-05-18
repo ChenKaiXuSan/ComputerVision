@@ -15,3 +15,4 @@
 "python.formatting.autopep8Path": "autopep8"
 ```
 
+### 使用anaconda之后就不需要上面的步骤了
