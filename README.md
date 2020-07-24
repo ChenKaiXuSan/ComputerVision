@@ -17,7 +17,7 @@
 
 ### 使用anaconda之后就不需要上面的步骤了
 
-## Keras
+# Keras
 gpu支持
 ```
 conda install -c anaconda keras-gpu
