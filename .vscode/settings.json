@@ -5,5 +5,5 @@
             "--load-plugins", "pylint_django"
         ],
     "python.formatting.autopep8Path": "autopep8",
-    "python.pythonPath": "/home/chenkaixu/anaconda3/bin/python"
+    "python.pythonPath": "F:\\anaconda\\python.exe"
 }
