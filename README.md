@@ -55,3 +55,21 @@ else:
 git config --global user.name "你的用户名"
 git config --global user.email "你的公司或个人邮箱"
 ```
+
+## 生成key
+```
+ssh-keygen -t rsa -C "你的公司或个人邮箱"
+```
+
+## 查看id_rsa.pub
+```
+cat ~/.ssh/id_rsa.pub 
+```
+
+## 复制到GitHub上
+
+## 测试连接
+```
+ssh -T git@bitbucket.org
+ssh git@github.com
+``` 
