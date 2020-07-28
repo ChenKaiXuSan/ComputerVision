@@ -48,3 +48,10 @@ if tf.test.gpu_device_name():
 else:
     print("Please install GPU version of TF")
 ```
+
+# GIT绑定GitHub
+## 设置user.name/user.email
+```
+git config --global user.name "你的用户名"
+git config --global user.email "你的公司或个人邮箱"
+```
