@@ -15,7 +15,7 @@
 "python.formatting.autopep8Path": "autopep8"
 ```
 
-### 使用anaconda之后就不需要上面的步骤了
+**使用anaconda之后就不需要上面的步骤了**
 
 # Keras
 gpu支持
@@ -73,3 +73,20 @@ cat ~/.ssh/id_rsa.pub
 ssh -T git@bitbucket.org
 ssh git@github.com
 ``` 
+
+# PyTorch
+## 安装
+使用window+anconda安装
+```
+pip install torch===1.6.0 torchvision===0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
+```
+## 测试安装
+```
+from future import print_function import torch 
+x = torch.rand(5, 3) print(x)
+```
+
+## 测试是否使用cuda
+```
+import torch torch.cuda.is_available()
+```
