@@ -78,8 +78,13 @@ ssh git@github.com
 ## 安装
 使用window+anconda安装
 ```
+conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
+```
+使用pip安装
+```
 pip install torch===1.6.0 torchvision===0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
 ```
+
 ## 测试安装
 ```
 from future import print_function import torch 
