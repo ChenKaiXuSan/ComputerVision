@@ -3,3 +3,5 @@ Keras/dogs-vs-cats/
 .vscode/settings.json
 ComputerVision/PyTorch/pytorchupandrunning/imagenet
 images/
+PyTorch/celeba
+PyTorch/dateset
