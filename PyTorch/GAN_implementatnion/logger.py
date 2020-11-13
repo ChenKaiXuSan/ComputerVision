@@ -3,9 +3,10 @@ import tensorflow as tf
 import numpy as np
 # import scipy.misc
 import matplotlib.pyplot as plt
+import io
 
 try:
-    from StringIO import StringIO  # Python 2.7
+    from io.StringIO import StringIO  # Python 2.7
 except ImportError:
     from io import BytesIO  # Python 3.x
 
