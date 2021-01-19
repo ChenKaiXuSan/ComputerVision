@@ -100,5 +100,3 @@ import torch torch.cuda.is_available()
 ```
 tensorboard --logdir dir
 ```
-
-![test](PyTorch/temp_data_plot.png)
