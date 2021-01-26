@@ -1,8 +1,6 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
 # %%
-from PyTorch.pytorch_example_mnist import train
-from PyTorch.GAN_implementatnion.cdcgan_text import discriminator
 import argparse
 import os 
 import numpy as np
@@ -13,7 +11,7 @@ from torchvision.utils import save_image
 
 from torch.utils.data import DataLoader, dataloader
 from torchvision import datasets
-from torch.autograd import Variable
+from torch.autograd import Variable, variable
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -29,7 +27,7 @@ os.makedirs("images", exist_ok=True)
 
 # %%
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=10, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
@@ -79,7 +77,7 @@ class Generator(nn.Module):
 
     def forward(self, z):
         out = self.l1(z)
-        out = out.view(opt.shape[0], 128, self.init_size, self.init_size)
+        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
         img = self.conv_blocks(out) 
         return img
         
@@ -150,8 +148,62 @@ dataloader = torch.utils.data.DataLoader(
 )
 
 # %%
-
+# optimizers 
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 # %%
+# 判断一下tensor在gpu上还是在cpu上运算
+Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+# %%
+# training 
+for epoch in range(opt.n_epochs):
+    for i, (imgs, _) in enumerate(dataloader):
+
+        # adversarial ground truths
+        valid = Variable(Tensor(imgs.shape[0], 1).fill_(1.0), requires_grad=False)
+        fake = Variable(Tensor(imgs.shape[0], 1).fill_(0.0), requires_grad=False)
+
+        # configure input
+        real_imgs = Variable(imgs.type(Tensor))
+
+        # train Generator
+
+        optimizer_G.zero_grad()
+
+        # sample noise as generator input
+        z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim))))
+
+        # gernerate a batch of images 
+        gen_imgs = generator(z)
+
+        # Loss measures generator's ability to fool the discriminator
+        g_loss = adversarial_loss(discriminator(gen_imgs), valid)
+
+        g_loss.backward()
+        optimizer_G.step()
+
+        # train Discriminator
+        optimizer_D.zero_grad()
+
+        # measure discriminator's ability to classify real from generated samples
+        real_loss = adversarial_loss(discriminator(real_imgs), valid)
+        fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
+        d_loss = (real_loss + fake_loss) / 2
+
+        d_loss.backward()
+        optimizer_D.step()
+
+        print(
+            "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
+            % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
+        )
+
+        batches_done = epoch * len(dataloader) + i
+        if batches_done % opt.sample_interval == 0:
+            save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
+
+
+
 
 # %%
 m = nn.BatchNorm1d(100)
