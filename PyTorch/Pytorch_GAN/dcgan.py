@@ -27,7 +27,7 @@ os.makedirs("images", exist_ok=True)
 
 # %%
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=2, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
@@ -101,7 +101,7 @@ class Discriminator(nn.Module):
 
         # the height and width of downsampled image
         ds_size = opt.img_size // 2 ** 4
-        self.adv_layer = nn.Sequential(nn.Linear(128 * ds_size ** 2, 1))
+        self.adv_layer = nn.Sequential(nn.Linear(128 * ds_size ** 2, 1), nn.Sigmoid())
 
     def forward(self, img):
         out = self.model(img)
@@ -154,6 +154,32 @@ optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt
 # %%
 # 判断一下tensor在gpu上还是在cpu上运算
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+
+# %%
+# 将结果保存到file中
+# file = open("result.txt", 'w')
+
+# from tensorboardX import SummaryWriter
+
+# writer = SummaryWriter('result')
+
+# %%
+import os
+import sys
+"""[summary] : 将标准输出保存到指定文件中
+"""
+class Logger():
+    def __init__(self, filename="log.txt"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "w")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        pass
+
 # %%
 # training 
 for epoch in range(opt.n_epochs):
@@ -198,18 +224,10 @@ for epoch in range(opt.n_epochs):
             % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
         )
 
+        # 将结果保存到文件中
+        # if i == 900:
+        #     sys.stdout = Logger()
+
         batches_done = epoch * len(dataloader) + i
         if batches_done % opt.sample_interval == 0:
             save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
-
-
-
-
-# %%
-m = nn.BatchNorm1d(100)
-print(m)
-input = torch.randn(20, 100)
-print(input.shape)
-output = m(input)
-print(output.shape)
-# %%
