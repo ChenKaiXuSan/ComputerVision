@@ -64,8 +64,8 @@ class discriminator(nn.Module):
     # initial
     def __init__(self, d = 128):
         super(discriminator, self).__init__()
-        self.conv1_1 = nn.Conv2d(3, d/2, 4, 2, 1)
-        self.conv1_2 = nn.Conv2d(2, d/2, 4, 2, 1)
+        self.conv1_1 = nn.Conv2d(3, d//2, 4, 2, 1)
+        self.conv1_2 = nn.Conv2d(2, d//2, 4, 2, 1)
         self.conv2 = nn.Conv2d(d, d*2, 4, 2, 1)
         self.conv2_bn = nn.BatchNorm2d(d*2)
         self.conv3 = nn.Conv2d(d*2, d*4, 4, 2, 1)
@@ -215,7 +215,136 @@ def show_noise_morp(show=False, save=False, path='result.png'):
     G.train()
 
     size_figure_grid = 10
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(size_figure_grid, size_figure_grid, figsize=(img_size, img_size))
+    for i, j in itertools.product(range(size_figure_grid), range(size_figure_grid)):
+        ax[i, j].get_xaxis().set_visible(False)
+        ax[i, j].get_yaxis().set_visible(False)
+
+    for k in range(10 * 10):
+        i = k // 10
+        j = k % 10
+        ax[i, j].cla() # clear the axes
+        ax[i, j].imshow((test_images[k].cpu().data.numpy().transpose(1, 2, 0) + 1) / 2)
+
+    if save:
+        plt.savefig(path)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
+# %%
+# training parameters
+batch_size = 128
+lr = 0.0002
+train_epoch = 20
+# %%
+# data loader 
+isCrop = False
+if isCrop:
+    transform = transforms.Compose([
+        transforms.Scale(108),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+    ])
+else:
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+    ])
+
+# data_dir = r'H:\ComputerVision\PyTorch\data\resized_celebA\img_align_celeba'
+data_dir = '../data/resized_celebA/' # 路径要写到存放图片的上一级路径中
+
+
+dset = datasets.ImageFolder(data_dir, transform)
+dset.imgs.sort()
+# dset = datasets.CelebA(root='../data/', split='train', transform=transform, download=True)
+
+train_loader = torch.utils.data.DataLoader(dset, batch_size=128, shuffle=False)
+temp = plt.imread(train_loader.dataset.imgs[0][0])
+if (temp.shape[0] != img_size) or (temp.shape[0] != img_size):
+    sys.stderr.write('Error! image size is not 64 x 64!')
+    sys.exit(1)
+
+# %%
+# network
+G = generator(128)
+D = discriminator(128)
+G.weight_init(mean=0.0, std=0.02)
+D.weight_init(mean=0.0, std=0.02)
+G.cuda()
+D.cuda()
+
+# binary cross entropy loss
+BCE_loss = nn.BCELoss()
+
+# Adam optimizer 
+G_optimizer = optim.Adam(G.parameters(), lr=lr, betas=(0.5, 0.999))
+D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
+
+# %%
+# results save folder 
+root = '../data/CelebaA_cDcgan_results/'
+model = '../data/CelebA_cDCGAN'
+if not os.path.isdir(root):
+    os.mkdir(root)
+if not os.path.isdir(root + 'Fixed_results'):
+    os.mkdir(root + 'Fixed_results')
+
+train_hist = {} # 创建一个字典保存数据
+train_hist['D_losses'] = []
+train_hist['G_losses'] = []
+train_hist['per_epoch_ptimes'] = []
+train_hist['total_ptime'] = []
+# %%
+# training start 
+print('training start!')
+start_time = time.time()
+for epoch in range(train_epoch):
+    D_losses = [] # list
+    G_losses = []
+
+    # learning rate decay
+    if (epoch+1) == 11:
+        G_optimizer.param_groups[0]['lr'] /= 10
+        D_optimizer.param_groups[0]['lr'] /= 10
+        print("learning rate change!")
+
+    if (epoch+1) == 16:
+        G_optimizer.param_groups[0]['lr'] /= 10
+        D_optimizer.param_groups[0]['lr'] /= 10
+        print("learning rate change!")
+
+    # create ground truth
+    y_real_ = torch.ones(batch_size)
+    y_fake_ = torch.zeros(batch_size)
+    y_real_, y_fake_ = Variable(y_real_.cuda()), Variable(y_fake_.cuda()) # 放到gpu上并计算梯度
+
+    epoch_start_time = time.time()
+    num_iter = 0
+
+    for x_, _ in train_loader:
+        # train discriminator 
+        D.zero_grad()
+
+        if isCrop:
+            x_ = x_[:, :, 22:86, 22:86]
+
+        mini_batch = x_.size()[0]
+        
+        if mini_batch != batch_size:
+            y_real_ = torch.ones(mini_batch)
+            y_fake_ = torch.zeros(mini_batch)
+            y_real_, y_fake_ = Variable(y_real_.cuda()), Variable(y_fake_.cuda())
+            y_ = y_gender_[batch_size*num_iter:]
+        else:
+            y_ = y_gender_[batch_size*num_iter:batch_size*(num_iter+1)]
+
+        y_fill_ = fill[y_]
+        x_, y_fill_ = Variable(x_.cuda()), Variable(y_fill_.cuda())
+
+
 
 
 # %%
