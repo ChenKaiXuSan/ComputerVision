@@ -5,7 +5,7 @@ from skimage.transform import resize
 import shutil
 
 # 注意文件运行时候的路径
-shutil.rmtree('../data/resized_celebA/')
+shutil.rmtree('../data/resized_celebA/celebA')
 # root path depends on your computer
 root = r'H:/data/img_align_celeba/'
 save_root = '../data/resized_celebA/'

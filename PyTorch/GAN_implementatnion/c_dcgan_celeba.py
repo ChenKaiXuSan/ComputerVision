@@ -13,6 +13,7 @@ import imageio
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules.loss import BCELoss
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
@@ -343,6 +344,10 @@ for epoch in range(train_epoch):
 
         y_fill_ = fill[y_]
         x_, y_fill_ = Variable(x_.cuda()), Variable(y_fill_.cuda())
+
+        D_result = D(x_, y_fill_).squeeze()
+
+        D_real_loss = BCE_loss(D_result, y_real_)
 
 
 
