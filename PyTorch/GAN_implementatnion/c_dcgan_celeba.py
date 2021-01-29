@@ -27,17 +27,17 @@ class generator(nn.Module):
         super(generator, self).__init__()
         # z, 100
         self.deconv1_1 = nn.ConvTranspose2d(100, d*4, 4, 1, 0)
-        self.devonv1_1_bn = nn.BatchNorm2d(d*4)
+        self.deconv1_1_bn = nn.BatchNorm2d(d*4)
         # y (label 变为2，female and male)
-        self.devonv1_2 = nn.ConvTranspose2d(2, d*4, 4, 1, 0)
-        self.devonv1_2_bn = nn.BatchNorm2d(d*4)
+        self.deconv1_2 = nn.ConvTranspose2d(2, d*4, 4, 1, 0)
+        self.deconv1_2_bn = nn.BatchNorm2d(d*4)
 
-        self.devonv2 = nn.ConvTranspose2d(d*8, d*4, 4, 2, 1)
-        self.devonv2_bn = nn.BatchNorm2d(d*4)
+        self.deconv2 = nn.ConvTranspose2d(d*8, d*4, 4, 2, 1)
+        self.deconv2_bn = nn.BatchNorm2d(d*4)
         self.deconv3 = nn.ConvTranspose2d(d*4, d*2, 4, 2, 1)
         self.deconv3_bn = nn.BatchNorm2d(d*2)
         self.deconv4 = nn.ConvTranspose2d(d*2, d, 4, 2, 1)
-        self.devonv4_bn = nn.BatchNorm2d(d)
+        self.deconv4_bn = nn.BatchNorm2d(d)
         self.deconv5 = nn.ConvTranspose2d(d, 3, 4, 2, 1)
 
     # weight_init 
@@ -48,12 +48,12 @@ class generator(nn.Module):
     # forward method
     def forward(self, input, label):
         x = F.leaky_relu(self.deconv1_1_bn(self.deconv1_1(input)), 0.2)
-        y = F.leaky_relu(self.deconv1_2_bn(self.devonv1_2(label)), 0.2)
+        y = F.leaky_relu(self.deconv1_2_bn(self.deconv1_2(label)), 0.2)
         
         x = torch.cat([x, y], 1)
 
         x = F.leaky_relu(self.deconv2_bn(self.deconv2(x)), 0.2)
-        x = F.leaky_relu(self.deconv3_bn(self.deconv(x)), 0.2)
+        x = F.leaky_relu(self.deconv3_bn(self.deconv3(x)), 0.2)
         x = F.leaky_relu(self.deconv4_bn(self.deconv4(x)), 0.2)
         x = F.tanh(self.deconv5(x))
 
@@ -62,7 +62,6 @@ class generator(nn.Module):
 
 # %%
 class discriminator(nn.Module):
-    # initial
     def __init__(self, d = 128):
         super(discriminator, self).__init__()
         self.conv1_1 = nn.Conv2d(3, d//2, 4, 2, 1)
@@ -152,7 +151,7 @@ def show_result(num_epoch, show = False, save = False, path = 'result.png'):
         i = k // size_figure_grid
         j = k % size_figure_grid
         ax[i, j].cla() # clear axis
-        ax[i, j].imshow((test_images[k].cpu().data.numpy().transposes(1, 2, 0) + 1) / 2)
+        ax[i, j].imshow((test_images[k].cpu().data.numpy().transpose(1, 2, 0) + 1) / 2)
 
     label = 'Epoch {0}'.format(num_epoch)
     fig.text(0.5, 0.04, label, ha='center') # add text to the axes
@@ -264,7 +263,7 @@ dset.imgs.sort()
 
 train_loader = torch.utils.data.DataLoader(dset, batch_size=128, shuffle=False)
 temp = plt.imread(train_loader.dataset.imgs[0][0])
-if (temp.shape[0] != img_size) or (temp.shape[0] != img_size):
+if (temp.shape[0] != img_size) or (temp.shape[1] != img_size):
     sys.stderr.write('Error! image size is not 64 x 64!')
     sys.exit(1)
 
@@ -287,7 +286,7 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 # %%
 # results save folder 
 root = '../data/CelebaA_cDcgan_results/'
-model = '../data/CelebA_cDCGAN'
+model = 'CelebA_cDCGAN_'
 if not os.path.isdir(root):
     os.mkdir(root)
 if not os.path.isdir(root + 'Fixed_results'):
@@ -295,7 +294,7 @@ if not os.path.isdir(root + 'Fixed_results'):
 
 train_hist = {} # 创建一个字典保存数据
 train_hist['D_losses'] = []
-train_hist['G_losses'] = []
+train_hist['G_losses'] = []  
 train_hist['per_epoch_ptimes'] = []
 train_hist['total_ptime'] = []
 # %%
@@ -349,8 +348,83 @@ for epoch in range(train_epoch):
 
         D_real_loss = BCE_loss(D_result, y_real_)
 
+        z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1) # noise 
+        y_ = (torch.rand(mini_batch, 1) * 2).type(torch.LongTensor).squeeze()
+        y_label_ = onehot[y_] # to G use onehot to fill the y_ to [mini_batch, 2, 1, 1]
+        y_fill_ = fill[y_] #  to D  use fill to fill the y_ to [mini_batch, 2, 64, 64]
+        z_, y_label_, y_fill_ = Variable(z_.cuda()), Variable(y_label_.cuda()), Variable(y_fill_.cuda())
+
+        G_result = G(z_, y_label_)
+        D_result = D(G_result, y_fill_).squeeze()
+    
+        D_fake_loss = BCE_loss(D_result, y_fake_)
+        D_fake_score = D_result.data.mean()
+        D_train_loss = D_real_loss + D_fake_loss
+
+        D_train_loss.backward()
+        D_optimizer.step()
+
+        D_losses.append(D_train_loss.item())  # record the d losses
+
+        # train generator
+        G.zero_grad()
+
+        z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1)
+        y_ = (torch.rand(mini_batch, 1) * 2).type(torch.LongTensor).squeeze()
+        y_label_ = onehot[y_]
+        y_fill_ = fill[y_]
+        z_, y_label_, y_fill_ = Variable(z_.cuda()), Variable(y_label_.cuda()), Variable(y_fill_.cuda())
+
+        G_result = G(z_, y_label_)
+        D_result = D(G_result, y_fill_).squeeze()
+
+        G_train_loss = BCE_loss(D_result, y_real_)
+
+        G_train_loss.backward()
+        G_optimizer.step()
+
+        G_losses.append(G_train_loss.item()) # record the g losses
+
+        num_iter += 1
+
+        if (num_iter % 100) == 0:
+            print('%d - %d complete!' % ((epoch + 1), num_iter))
+
+    epoch_end_time = time.time()
+    per_epoch_ptime = time.asctime(time.localtime( epoch_end_time - epoch_start_time ))
+
+    print('[%d/%d] - ptime: %.2f, loss_d: %.3f, loss_g: %.3f' % 
+        ((epoch + 1), train_epoch, per_epoch_ptime, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
+
+    fixed_p = root + 'Fixed_results/' + model + str(epoch + 1) + '.png'
+    show_result((epoch + 1), save=True, path=fixed_p)
+
+    train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
+    train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
+    train_hist['per_epoch_ptimes'].append(per_epoch_ptime)
+
+end_time = time.time()
+total_ptime = end_time - start_time
+train_hist['total_ptime'].append(total_ptime)
+
+print("Avg one epoch ptime: %.2f, total %d epochs ptime: %.2f" % (torch.mean(torch.FloatTensor(train_hist['per_epoch_ptimes'])), train_epoch, total_ptime))
+print("Training finis!...save training results")
+torch.save(G.state_dict(), root + model + 'generator_param.pkl')
+torch.save(D.state_dict(), root + model + 'discriminator_param.pkl')
+with open(root + model + 'train_hist.pkl', 'wb') as f:
+    pickle.dump(train_hist, f) # 将对象 obj 封存以后的对象写入已打开的 file object file
+
+show_train_hist(train_hist, save=True, path=root + model + 'train_hist.png')
 
 
+images = []
+for e in range(train_epoch):
+    img_name = root + 'Fixed_results/' + model + str(e + 1) + '.png'
+    images.append(imageio.imread(img_name))
+
+imageio.mimsave(root + model + 'generation_animation.gif', images, fps=5)
+
+show_noise_morp(save=True, path=root + model + 'warp.png')
 
 # %%
 x = torch.rand(3)
