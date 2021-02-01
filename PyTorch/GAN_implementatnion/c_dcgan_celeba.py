@@ -235,9 +235,9 @@ def show_noise_morp(show=False, save=False, path='result.png'):
         plt.close()
 # %%
 # training parameters
-batch_size = 128
+batch_size =  128
 lr = 0.0002
-train_epoch = 20
+train_epoch = 1 # 20
 # %%
 # data loader 
 isCrop = False
@@ -261,7 +261,7 @@ dset = datasets.ImageFolder(data_dir, transform)
 dset.imgs.sort()
 # dset = datasets.CelebA(root='../data/', split='train', transform=transform, download=True)
 
-train_loader = torch.utils.data.DataLoader(dset, batch_size=128, shuffle=False)
+train_loader = torch.utils.data.DataLoader(dset, batch_size=128, shuffle=False) # batch_size = 128
 temp = plt.imread(train_loader.dataset.imgs[0][0])
 if (temp.shape[0] != img_size) or (temp.shape[1] != img_size):
     sys.stderr.write('Error! image size is not 64 x 64!')
@@ -285,8 +285,12 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 
 # %%
 # results save folder 
+import shutil
 root = '../data/CelebaA_cDcgan_results/'
 model = 'CelebA_cDCGAN_'
+# 删除之前的结果
+if os.path.isdir(root):
+    shutil.rmtree(root)
 if not os.path.isdir(root):
     os.mkdir(root)
 if not os.path.isdir(root + 'Fixed_results'):
@@ -391,7 +395,7 @@ for epoch in range(train_epoch):
             print('%d - %d complete!' % ((epoch + 1), num_iter))
 
     epoch_end_time = time.time()
-    per_epoch_ptime = time.asctime(time.localtime( epoch_end_time - epoch_start_time ))
+    per_epoch_ptime = epoch_end_time - epoch_start_time
 
     print('[%d/%d] - ptime: %.2f, loss_d: %.3f, loss_g: %.3f' % 
         ((epoch + 1), train_epoch, per_epoch_ptime, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
