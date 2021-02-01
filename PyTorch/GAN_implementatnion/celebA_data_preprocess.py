@@ -5,10 +5,15 @@ from skimage.transform import resize
 import shutil
 
 # 注意文件运行时候的路径
-shutil.rmtree('../data/resized_celebA/celebA')
+# service(linux)
+shutil.rmtree('/home/xchen/ComputerVision/PyTorch/data/resized_celebA')
+# shutil.rmtree('../data/resized_celebA/')
 # root path depends on your computer
-root = r'H:/data/img_align_celeba/'
-save_root = '../data/resized_celebA/'
+# root = r'H:/data/img_align_celeba/'
+root = '/home/xchen/ComputerVision/PyTorch/celeba/img_align_celeba/'
+
+save_root = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/'
+# save_root = '../data/resized_celebA/'
 
 resize_size = 64
 

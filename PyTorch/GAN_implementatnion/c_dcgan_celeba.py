@@ -113,8 +113,8 @@ for i in range(2):
     fill[i, i, :, :] = 1
 
 # print(fill)
-
-with open(r'../data/resized_celebA/gender_label.pkl', 'rb') as fp:
+with open(r'/home/xchen/ComputerVision/PyTorch/data/resized_celebA/gender_label.pkl', 'rb') as fp:
+# with open(r'../data/resized_celebA/gender_label.pkl', 'rb') as fp:
     y_gender_ = pickle.load(fp)
 
 y_gender_ = torch.LongTensor(y_gender_).squeeze() # 在给定的维度上进行压缩
@@ -285,7 +285,8 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 
 # %%
 # results save folder 
-root = '../data/CelebaA_cDcgan_results/'
+root = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/CelebaA_cDcgan_results/'
+# root = '../data/CelebaA_cDcgan_results/'
 model = 'CelebA_cDCGAN_'
 if not os.path.isdir(root):
     os.mkdir(root)
@@ -393,8 +394,9 @@ for epoch in range(train_epoch):
     epoch_end_time = time.time()
     per_epoch_ptime = time.asctime(time.localtime( epoch_end_time - epoch_start_time ))
 
-    print('[%d/%d] - ptime: %.2f, loss_d: %.3f, loss_g: %.3f' % 
-        ((epoch + 1), train_epoch, per_epoch_ptime, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
+    print('[%d/%d] -  loss_d: %.3f, loss_g: %.3f' % 
+        ((epoch + 1), train_epoch,  torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses)))
+        + 'ptime:' + per_epoch_ptime)
 
     fixed_p = root + 'Fixed_results/' + model + str(epoch + 1) + '.png'
     show_result((epoch + 1), save=True, path=fixed_p)
@@ -425,9 +427,5 @@ for e in range(train_epoch):
 imageio.mimsave(root + model + 'generation_animation.gif', images, fps=5)
 
 show_noise_morp(save=True, path=root + model + 'warp.png')
-
-# %%
-x = torch.rand(3)
-print(x)
 
 
