@@ -426,8 +426,5 @@ imageio.mimsave(root + model + 'generation_animation.gif', images, fps=5)
 
 show_noise_morp(save=True, path=root + model + 'warp.png')
 
-# %%
-x = torch.rand(3)
-print(x)
 
 
