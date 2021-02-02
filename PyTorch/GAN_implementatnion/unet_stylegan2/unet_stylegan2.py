@@ -67,9 +67,3 @@ class RandomApply(nn.Module):
     def forward(self, x):
         fn = self.fn if random() < self.prob else self.fn_else
         return fn(x)
-
-
-
-
-
-# %%
