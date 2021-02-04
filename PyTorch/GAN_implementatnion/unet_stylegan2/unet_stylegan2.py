@@ -67,3 +67,41 @@ class RandomApply(nn.Module):
     def forward(self, x):
         fn = self.fn if random() < self.prob else self.fn_else
         return fn(x)
+
+class Residual(nn.Module):
+    "剩余的"
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+    
+    def forward(self, x):
+        return self.fn(x) + x
+
+class Flatten(nn.Module):
+    "变平"
+    def __init__(self, index):
+        super().__init__()
+        self.index = index
+    def forward(self, x):
+        return x.flatten(self.index)
+
+class Rezero(nn.Module):
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+        self.g = nn.Parameter(torch.zeros(1))
+
+    def forward(self, x):
+        return self.fn(x) * self.g
+# %%
+# one layer of self-attention and feedforward, for image
+
+attn_and_ff = lambda chan: nn.Sequential(*[
+    Residual(Rezero(ImageLinearAttention(chan, norm_queries=True))),
+    Residual(Rezero(nn.Sequential(nn.Conv2d(chan, chan * 2, 1), leaky_relu(), nn.Conv2d(chan * 2, chan, 1))))
+])
+
+# %%
+# helpers
+
+# %%
