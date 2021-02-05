@@ -236,8 +236,8 @@ def show_noise_morp(show=False, save=False, path='result.png'):
 # %%
 # training parameters
 batch_size = 128
-lr = 0.0002
-train_epoch = 20
+lr = 0.00002
+train_epoch = 1
 # %%
 # data loader 
 isCrop = False
@@ -254,7 +254,7 @@ else:
     ])
 
 # data_dir = r'H:\ComputerVision\PyTorch\data\resized_celebA\img_align_celeba'
-data_dir = '../data/resized_celebA/' # 路径要写到存放图片的上一级路径中
+data_dir = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/' # 路径要写到存放图片的上一级路径中
 
 
 dset = datasets.ImageFolder(data_dir, transform)
@@ -285,7 +285,7 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 
 # %%
 # results save folder 
-root = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/CelebaA_cDcgan_results/'
+root = '/home/xchen/ComputerVision/data/CelebaA_cDcgan_results/'
 # root = '../data/CelebaA_cDcgan_results/'
 model = 'CelebA_cDCGAN_'
 if not os.path.isdir(root):
@@ -392,11 +392,11 @@ for epoch in range(train_epoch):
             print('%d - %d complete!' % ((epoch + 1), num_iter))
 
     epoch_end_time = time.time()
-    per_epoch_ptime = time.asctime(time.localtime( epoch_end_time - epoch_start_time ))
+    per_epoch_ptime =  epoch_end_time - epoch_start_time
 
-    print('[%d/%d] -  loss_d: %.3f, loss_g: %.3f' % 
-        ((epoch + 1), train_epoch,  torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses)))
-        + 'ptime:' + per_epoch_ptime)
+    print('[%d/%d] - ptime:%.2f loss_d: %.3f, loss_g: %.3f' % 
+        ((epoch + 1), train_epoch, per_epoch_ptime, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses)))
+    )
 
     fixed_p = root + 'Fixed_results/' + model + str(epoch + 1) + '.png'
     show_result((epoch + 1), save=True, path=fixed_p)
