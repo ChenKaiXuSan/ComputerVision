@@ -237,7 +237,7 @@ def show_noise_morp(show=False, save=False, path='result.png'):
 # training parameters
 batch_size =  128
 lr = 0.0002
-train_epoch = 1 # 20
+train_epoch = 100 # 20
 
 # %%
 # data loader 
