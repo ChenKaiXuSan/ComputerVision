@@ -235,15 +235,10 @@ def show_noise_morp(show=False, save=False, path='result.png'):
         plt.close()
 # %%
 # training parameters
-<<<<<<< HEAD:PyTorch/GAN_implementatnion/c_dcgan_celeba.py
-batch_size = 128
-lr = 0.00002
-train_epoch = 1
-=======
 batch_size =  128
 lr = 0.0002
 train_epoch = 1 # 20
->>>>>>> d18079905f0666e0365c31355864c257ff157f77:PyTorch/GAN_implementatnion/c_dcgan/c_dcgan_celeba.py
+
 # %%
 # data loader 
 isCrop = False
@@ -291,14 +286,10 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 
 # %%
 # results save folder 
-<<<<<<< HEAD:PyTorch/GAN_implementatnion/c_dcgan_celeba.py
 root = '/home/xchen/ComputerVision/data/CelebaA_cDcgan_results/'
 # root = '../data/CelebaA_cDcgan_results/'
-=======
-import shutil
-root = '../data/CelebaA_cDcgan_results/'
->>>>>>> d18079905f0666e0365c31355864c257ff157f77:PyTorch/GAN_implementatnion/c_dcgan/c_dcgan_celeba.py
 model = 'CelebA_cDCGAN_'
+import shutil
 # 删除之前的结果
 if os.path.isdir(root):
     shutil.rmtree(root)
@@ -406,11 +397,7 @@ for epoch in range(train_epoch):
             print('%d - %d complete!' % ((epoch + 1), num_iter))
 
     epoch_end_time = time.time()
-<<<<<<< HEAD:PyTorch/GAN_implementatnion/c_dcgan_celeba.py
     per_epoch_ptime =  epoch_end_time - epoch_start_time
-=======
-    per_epoch_ptime = epoch_end_time - epoch_start_time
->>>>>>> d18079905f0666e0365c31355864c257ff157f77:PyTorch/GAN_implementatnion/c_dcgan/c_dcgan_celeba.py
 
     print('[%d/%d] - ptime:%.2f loss_d: %.3f, loss_g: %.3f' % 
         ((epoch + 1), train_epoch, per_epoch_ptime, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses)))
