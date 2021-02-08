@@ -13,7 +13,7 @@ import imageio
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.modules.loss import BCELoss
+from torch.nn.modules.loss import BCELoss, MSELoss
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
@@ -113,7 +113,8 @@ for i in range(2):
     fill[i, i, :, :] = 1
 
 # print(fill)
-with open(r'/home/xchen/ComputerVision/PyTorch/data/resized_celebA/gender_label.pkl', 'rb') as fp:
+with open(r"H:\ComputerVision\PyTorch\data\resized_celebA\gender_label.pkl", 'rb') as fp:
+# with open(r'/home/xchen/ComputerVision/PyTorch/data/resized_celebA/gender_label.pkl', 'rb') as fp:
 # with open(r'../data/resized_celebA/gender_label.pkl', 'rb') as fp:
     y_gender_ = pickle.load(fp)
 
@@ -123,15 +124,16 @@ y_gender_ = torch.LongTensor(y_gender_).squeeze() # 在给定的维度上进行�
 # %%
 # fixed noise & label
 temp_z0_ = torch.randn(4, 100)
-temp_z0_ = torch.cat([temp_z0_, temp_z0_], 0)
+temp_z0_ = torch.cat([temp_z0_, temp_z0_], 0) # (8, 100)
 temp_z1_ = torch.randn(4, 100)
-temp_z1_ = torch.cat([temp_z1_, temp_z1_], 0)
+temp_z1_ = torch.cat([temp_z1_, temp_z1_], 0) # (8, 100)
 
-fixed_z_ = torch.cat([temp_z0_, temp_z1_], 0)
+fixed_z_ = torch.cat([temp_z0_, temp_z1_], 0) # (16, 100)
+# (16)
 fixed_y_ = torch.cat([torch.zeros(4), torch.ones(4), torch.zeros(4), torch.ones(4)], 0).type(torch.LongTensor).squeeze()
 
-fixed_z_ = fixed_z_.view(-1, 100, 1, 1)
-fixed_y_label = onehot[fixed_y_]
+fixed_z_ = fixed_z_.view(-1, 100, 1, 1) # 16, 100, 1, 1
+fixed_y_label = onehot[fixed_y_] # 16, 2, 1, 1
 fixed_z_, fixed_y_label = Variable(fixed_z_.cuda(), volatile = True), Variable(fixed_y_label.cuda(), volatile=True)
 
 
@@ -235,9 +237,9 @@ def show_noise_morp(show=False, save=False, path='result.png'):
         plt.close()
 # %%
 # training parameters
-batch_size =  128
+batch_size =  64 # 128
 lr = 0.0002
-train_epoch = 100 # 20
+train_epoch = 1 # 20
 
 # %%
 # data loader 
@@ -254,15 +256,15 @@ else:
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])
 
-# data_dir = r'H:\ComputerVision\PyTorch\data\resized_celebA\img_align_celeba'
-data_dir = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/' # 路径要写到存放图片的上一级路径中
+data_dir = r'H:\ComputerVision\PyTorch\data\resized_celebA'
+# data_dir = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/' # 路径要写到存放图片的上一级路径中
 
 
 dset = datasets.ImageFolder(data_dir, transform)
 dset.imgs.sort()
 # dset = datasets.CelebA(root='../data/', split='train', transform=transform, download=True)
 
-train_loader = torch.utils.data.DataLoader(dset, batch_size=128, shuffle=False) # batch_size = 128
+train_loader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=False) # batch_size = 128
 temp = plt.imread(train_loader.dataset.imgs[0][0])
 if (temp.shape[0] != img_size) or (temp.shape[1] != img_size):
     sys.stderr.write('Error! image size is not 64 x 64!')
@@ -278,7 +280,8 @@ G.cuda()
 D.cuda()
 
 # binary cross entropy loss
-BCE_loss = nn.BCELoss()
+# BCE_loss = nn.BCELoss()
+adversarial_loss = nn.MSELoss()
 
 # Adam optimizer 
 G_optimizer = optim.Adam(G.parameters(), lr=lr, betas=(0.5, 0.999))
@@ -286,13 +289,15 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 
 # %%
 # results save folder 
-root = '/home/xchen/ComputerVision/data/CelebaA_cDcgan_results/'
+# root = '/home/xchen/ComputerVision/data/CelebaA_cDcgan_results/'
+root = r'H:\ComputerVision\PyTorch\data\CelebaA_cDcgan_results/'
 # root = '../data/CelebaA_cDcgan_results/'
 model = 'CelebA_cDCGAN_'
 import shutil
 # 删除之前的结果
 if os.path.isdir(root):
     shutil.rmtree(root)
+
 if not os.path.isdir(root):
     os.mkdir(root)
 if not os.path.isdir(root + 'Fixed_results'):
@@ -311,16 +316,22 @@ for epoch in range(train_epoch):
     D_losses = [] # list
     G_losses = []
 
-    # learning rate decay
-    if (epoch+1) == 11:
-        G_optimizer.param_groups[0]['lr'] /= 10
-        D_optimizer.param_groups[0]['lr'] /= 10
-        print("learning rate change!")
+    # # learning rate decay
+    # if (epoch+1) == 11:
+    #     G_optimizer.param_groups[0]['lr'] /= 10
+    #     D_optimizer.param_groups[0]['lr'] /= 10
+    #     print("learning rate change!")
 
-    if (epoch+1) == 16:
+    # if (epoch+1) == 16:
+    #     G_optimizer.param_groups[0]['lr'] /= 10
+    #     D_optimizer.param_groups[0]['lr'] /= 10
+    #     print("learning rate change!")
+
+    if (epoch - 1) % 10 == 0:
         G_optimizer.param_groups[0]['lr'] /= 10
         D_optimizer.param_groups[0]['lr'] /= 10
-        print("learning rate change!")
+        print("learning rage change!")
+
 
     # create ground truth
     y_real_ = torch.ones(batch_size)
@@ -347,23 +358,27 @@ for epoch in range(train_epoch):
         else:
             y_ = y_gender_[batch_size*num_iter:batch_size*(num_iter+1)]
 
-        y_fill_ = fill[y_]
+        y_fill_ = fill[y_] # 128, 2, 64, 64
         x_, y_fill_ = Variable(x_.cuda()), Variable(y_fill_.cuda())
 
         D_result = D(x_, y_fill_).squeeze()
 
-        D_real_loss = BCE_loss(D_result, y_real_)
+        # D_real_loss = BCE_loss(D_result, y_real_)
+        D_real_loss = adversarial_loss(D_result, y_real_)
 
-        z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1) # noise 
+        z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1) # noise 128, 100, 1, 1
         y_ = (torch.rand(mini_batch, 1) * 2).type(torch.LongTensor).squeeze()
-        y_label_ = onehot[y_] # to G use onehot to fill the y_ to [mini_batch, 2, 1, 1]
-        y_fill_ = fill[y_] #  to D  use fill to fill the y_ to [mini_batch, 2, 64, 64]
+        # to G use onehot to fill the y_ to [mini_batch, 2, 1, 1]
+        y_label_ = onehot[y_] # 128 
+        #  to D  use fill to fill the y_ to [mini_batch, 2, 64, 64]
+        y_fill_ = fill[y_] # 128, 2, 64, 64 
         z_, y_label_, y_fill_ = Variable(z_.cuda()), Variable(y_label_.cuda()), Variable(y_fill_.cuda())
 
         G_result = G(z_, y_label_)
         D_result = D(G_result, y_fill_).squeeze()
     
-        D_fake_loss = BCE_loss(D_result, y_fake_)
+        # D_fake_loss = BCE_loss(D_result, y_fake_)
+        D_fake_loss = adversarial_loss(D_result, y_fake_)
         D_fake_score = D_result.data.mean()
         D_train_loss = D_real_loss + D_fake_loss
 
@@ -372,7 +387,7 @@ for epoch in range(train_epoch):
 
         D_losses.append(D_train_loss.item())  # record the d losses
 
-        # train generator
+        # train generator G
         G.zero_grad()
 
         z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1)
@@ -384,7 +399,8 @@ for epoch in range(train_epoch):
         G_result = G(z_, y_label_)
         D_result = D(G_result, y_fill_).squeeze()
 
-        G_train_loss = BCE_loss(D_result, y_real_)
+        # G_train_loss = BCE_loss(D_result, y_real_)
+        G_train_loss = adversarial_loss(D_result, y_real_)
 
         G_train_loss.backward()
         G_optimizer.step()

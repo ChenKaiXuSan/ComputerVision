@@ -46,6 +46,12 @@ cuda = True if torch.cuda.is_available() else False
 
 # %%
 def weights_init_normal(m):
+    '''
+    给weight和bias不同的值
+
+    Args:
+        m (str): 传入的层数对象
+    '''    
     classname = m.__class__.__name__
     if classname.find("Conv") != -1:
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
@@ -146,6 +152,7 @@ dataloader = torch.utils.data.DataLoader(
     batch_size = opt.batch_size,
     shuffle = True
 )
+
 
 # %%
 # optimizers 
