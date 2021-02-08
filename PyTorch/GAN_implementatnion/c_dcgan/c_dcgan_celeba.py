@@ -241,7 +241,7 @@ def show_noise_morp(show=False, save=False, path='result.png'):
 # training parameters
 batch_size =  64 # 128
 lr = 0.0002
-train_epoch = 1 # 20
+train_epoch = 100 # 20
 
 # %%
 # data loader 
@@ -291,8 +291,8 @@ D_optimizer = optim.Adam(D.parameters(), lr=lr, betas=(0.5, 0.999))
 
 # %%
 # results save folder 
-# root = '/home/xchen/ComputerVision/data/CelebaA_cDcgan_results/'
-root = r'H:\ComputerVision\PyTorch\data\CelebaA_cDcgan_results/'
+root = '/home/xchen/ComputerVision/data/CelebaA_cDcgan_results/'
+# root = r'H:\ComputerVision\PyTorch\data\CelebaA_cDcgan_results/' # win 10
 # root = '../data/CelebaA_cDcgan_results/'
 model = 'CelebA_cDCGAN_'
 import shutil
