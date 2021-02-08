@@ -113,9 +113,9 @@ for i in range(2):
     fill[i, i, :, :] = 1
 
 # print(fill)
-with open(r"H:\ComputerVision\PyTorch\data\resized_celebA\gender_label.pkl", 'rb') as fp:
+# with open(r"H:\ComputerVision\PyTorch\data\resized_celebA\gender_label.pkl", 'rb') as fp:
 # with open(r'/home/xchen/ComputerVision/PyTorch/data/resized_celebA/gender_label.pkl', 'rb') as fp:
-# with open(r'../data/resized_celebA/gender_label.pkl', 'rb') as fp:
+with open(r'../../data/resized_celebA/gender_label.pkl', 'rb') as fp:
     y_gender_ = pickle.load(fp)
 
 y_gender_ = torch.LongTensor(y_gender_).squeeze() # 在给定的维度上进行压缩
@@ -256,8 +256,8 @@ else:
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])
 
-data_dir = r'H:\ComputerVision\PyTorch\data\resized_celebA'
-# data_dir = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/' # 路径要写到存放图片的上一级路径中
+# data_dir = r'H:\ComputerVision\PyTorch\data\resized_celebA'
+data_dir = '/home/xchen/ComputerVision/PyTorch/data/resized_celebA/' # 路径要写到存放图片的上一级路径中
 
 
 dset = datasets.ImageFolder(data_dir, transform)
