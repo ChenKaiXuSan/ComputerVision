@@ -241,7 +241,7 @@ def show_noise_morp(show=False, save=False, path='result.png'):
 # training parameters
 batch_size =  64 # 128
 lr = 0.0002
-train_epoch = 100 # 20
+train_epoch = 20 # 20
 
 # %%
 # data loader 
@@ -281,9 +281,9 @@ D.weight_init(mean=0.0, std=0.02)
 G.cuda()
 D.cuda()
 
-# binary cross entropy loss
-# BCE_loss = nn.BCELoss()
-adversarial_loss = nn.MSELoss()
+# Loss function
+adversarial_loss = nn.BCELoss()
+# adversarial_loss = nn.MSELoss()
 
 # Adam optimizer 
 G_optimizer = optim.Adam(G.parameters(), lr=lr, betas=(0.5, 0.999))
@@ -329,10 +329,10 @@ for epoch in range(train_epoch):
     #     D_optimizer.param_groups[0]['lr'] /= 10
     #     print("learning rate change!")
 
-    if (epoch - 1) % 10 == 0:
-        G_optimizer.param_groups[0]['lr'] /= 10
-        D_optimizer.param_groups[0]['lr'] /= 10
-        print("learning rage change!")
+    # if (epoch - 1) % 10 == 0:
+    #     G_optimizer.param_groups[0]['lr'] /= 10
+    #     D_optimizer.param_groups[0]['lr'] /= 10
+    #     print("learning rage change!")
 
 
     # create ground truth
@@ -411,7 +411,7 @@ for epoch in range(train_epoch):
 
         num_iter += 1
 
-        if (num_iter % 100) == 0:
+        if (num_iter % 1000) == 0:
             print('%d - %d complete!' % ((epoch + 1), num_iter))
 
     epoch_end_time = time.time()
