@@ -20,6 +20,8 @@ from torch.autograd import Variable
 
 
 # %%
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# %%
 # G(z)
 class generator(nn.Module):
     # initial
@@ -239,9 +241,9 @@ def show_noise_morp(show=False, save=False, path='result.png'):
         plt.close()
 # %%
 # training parameters
-batch_size =  64 # 128
-lr = 0.0002
-train_epoch = 20 # 20
+batch_size =  32 # 128
+lr = 0.000001
+train_epoch = 50 # 20
 
 # %%
 # data loader 
