@@ -60,7 +60,7 @@ class DecoderBlock(nn.Module):
 
         # transpose convolution to double the dimensions
         self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2, 
-                                    stride=2, output_padding=1, bias=False)
+                                    output_padding=1, bias=False)
         self.bn = nn.BatchNorm2d(channel_out, momentum=0.9)
 
     def forward(self, ten):
@@ -194,11 +194,111 @@ class Discriminator(nn.Module):
             else:
                 ten =lay(ten)
 
-        
+        ten = ten.view(len(ten), -1)
+        ten =self.fc(ten)
+        return layer_ten, F.sigmoid(ten)
+
+    def __call__(self, *args, **kwargs):
+        return super(Discriminator, self).__call__(*args, **kwargs)
+
+class VaeGan(nn.Module):
+    def __init__(self, z_size=128, recon_level=3):
+        super(VaeGan, self).__init__()
+
+        # latent space size 
+        self.z_size = z_size
+        self.encoder = Encoder(z_size=self.z_size)
+        self.decoder = Decoder(z_size=self.z_size, size=self.encoder.size)
+        self.discriminator = Discriminator(channel_in=3, recon_level=recon_level)
+
+        # self defined function to init the parameters 
+        self.init_parameters()
+
+    def init_parameters(self):
+        '''
+        just explore the network, find every weight and bias matrix and fill it
+        '''
+        for m in self.modules():
+            if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.Linear)):
+                if hasattr(m, "weight") and m.weight is not None and m.weight.requires_grad:
+                    # init as original implementation
+                    scale = 1.0 / numpy.sqrt(numpy.prod(m.weight.shape[1:]))
+                    scale /= numpy.sqrt(3)
+                    nn.init.uniform(m.weight, -scale, scale)
+                if hasattr(m, "bias") and m.bias is not None and m.bias.requires_grad:
+                    nn.init.constant(m.bias, 0.0)
+
+    def forward(self, ten, gen_size=10):
+        if self.training:
+            # save the original images
+            ten_original = ten
+            # encode 
+            mus, log_variances = self.encoder(ten)
+            # we need the true variances, not the log one 
+            variances = torch.exp(log_variances * 0.5)
+            # sample from a gaussian 
+
+            ten_from_normal = Variable(torch.randn(len(ten), self.z_size).cuda(), requires_grad = True)
+            # shift and scale using the means and variances 
+
+            ten = ten_from_normal * variances + mus
+            # decode the tensor 
+            ten = self.decoder(ten)
+            ten_from_normal = Variable(torch.randn(len(ten), self.z_size).cuda(), requires_grad = True)
+            ten_from_normal = self.decoder(ten_from_normal)
+            # discriminator 
+            ten_layer, ten_class = self.discriminator(ten, ten_original, ten_from_normal)
+
+            return ten, ten_class, ten_layer, mus, log_variances
+
+        else:
+            if ten is None:
+                # just sample and decode
+
+                ten = Variable(torch.randn(gen_size, self.z_size).cuda(), requires_grad = False)
+                ten = self.decoder(ten)
+            else:
+                mus, log_variances = self.encoder(ten)
+                # we need the true variances, not the log one 
+                variances = torch.exp(log_variances * 0.5)
+                # sample from a gaussian 
+
+                ten_from_normal = Variable(torch.randn(len(ten), self.z_size).cuda(), requires_grad=False)
+                # shift and scale using the means and variances 
+                ten = ten_from_normal * variances + mus
+                # decode the tensor 
+                ten = self.decoder(ten)
+            return ten
+
+    def __call__(self, *args, **kwargs):
+        return super(VaeGan, self).__call__(*args, **kwargs)
+
+    @staticmethod # 声明一个静态方法
+    def loss(ten_original, ten_predicted, layer_original, layer_predicted, layer_sampled, labels_original,
+            labels_predicted, labels_sampled, mus, variances):
+
+        nle = 0.5*(ten_original.view(len(ten_original), -1) - ten_predicted.view(len(ten_predicted), -1)) ** 2
+        # kl-divergence 
+        kl = -0.5 * torch.sum(-variances.exp() - torch.pow(mus, 2) + variances + 1, 1)              
+        # mse between intermediate layers for both 
+        mse_1 = torch.sum(0.5*(layer_original - layer_predicted) ** 2, 1)
+        mse_2 = torch.sum(0.5*(layer_original - layer_sampled) ** 2, 1)
+        # bce for decoder and discriminator for original, sampled and reconstructed 
+        # the only excluded is the bce_gen_original 
+
+        bce_dis_original = -torch.log(labels_original + 1e-3)
+        bce_dis_sampled = -torch.log(1 - labels_sampled + 1e-3)
+        bce_dis_recon = -torch.log(1 - labels_predicted + 1e-3)
+
+        bce_gen_sampled = -torch.log(labels_sampled + 1e-3)
+        bce_gen_recon = -torch.log(labels_predicted + 1e-3)
+
+        return nle, kl, mse_1,mse_2,\
+               bce_dis_original, bce_dis_sampled,bce_dis_recon,bce_gen_sampled,bce_gen_recon
 
 
 
 
 
 
-# %%
+
