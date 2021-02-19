@@ -1,13 +1,12 @@
 # %% 
 import torch
-from torch._C import CharStorageBase
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy
 
 # %%
-class EncoderBlock(nn.Module):
+class EncoderBlock(nn.Module, object):
     '''
     encoder block (used in encoder and discriminator)
 
@@ -15,7 +14,7 @@ class EncoderBlock(nn.Module):
         nn ([type]): [description]
     '''
     def __init__(self, channel_in, channel_out):
-        super(self, EncoderBlock).__init__() 
+        super(EncoderBlock, self).__init__() 
 
         # convolution to halve the dimensions
         self.conv = nn.Conv2d(in_channels=channel_in, out_channels=channel_out, 
@@ -48,7 +47,7 @@ class EncoderBlock(nn.Module):
             return ten 
 
 
-class DecoderBlock(nn.Module):
+class DecoderBlock(nn.Module, object):
     '''
     decoder block (used in the decoder)
 
@@ -56,7 +55,7 @@ class DecoderBlock(nn.Module):
         nn ([type]): [description]
     '''    
     def __init__(self, channel_in, channel_out):
-        super(self, DecoderBlock).__init__()
+        super(DecoderBlock, self).__init__()
 
         # transpose convolution to double the dimensions
         self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2, 
@@ -71,7 +70,7 @@ class DecoderBlock(nn.Module):
         return ten
 
 
-class Encoder(nn.Module):
+class Encoder(nn.Module, object):
     '''
     encoder , made with encoderblock
 
@@ -79,7 +78,7 @@ class Encoder(nn.Module):
         nn ([type]): [description]
     '''    
     def __init__(self, channel_in=3, z_size=128):
-        super(self, Encoder).__init__()
+        super(Encoder, self).__init__()
         self.size = channel_in
         layers_list = []
         # the first time 3 -> 64, for every other double the channel size        
@@ -113,7 +112,7 @@ class Encoder(nn.Module):
     def __call__(self, *args, **kwargs):
         return super(Encoder, self).__call__(*args, **kwargs)
 
-class Decoder(nn.Module):
+class Decoder(nn.Module, object):
     '''
     decoder, made with decoderblock
 
@@ -121,7 +120,7 @@ class Decoder(nn.Module):
         nn ([type]): [description]
     '''    
     def __init__(self, z_size, size):
-        super(self, Decoder).__init__()
+        super(Decoder, self).__init__()
         # start from B*z_size
         self.fc = nn.Sequential(
             nn.Linear(in_features=z_size, out_features=8 * 8 * size, bias=False),
@@ -154,9 +153,9 @@ class Decoder(nn.Module):
     def __call__(self, *args, **kwargs):
         return super(Decoder, self).__call__(*args, **kwargs)
 
-class Discriminator(nn.Module):
+class Discriminator(nn.Module, object):
     def __init__(self, channel_in=3, recon_level=3):
-        super(self, Discriminator).__init__()
+        super(Discriminator, self).__init__()
         self.size = channel_in
         self.recon_levl = recon_level
         # module list because we need to extract an intermediate output
@@ -201,7 +200,7 @@ class Discriminator(nn.Module):
     def __call__(self, *args, **kwargs):
         return super(Discriminator, self).__call__(*args, **kwargs)
 
-class VaeGan(nn.Module):
+class VaeGan(nn.Module, object):
     def __init__(self, z_size=128, recon_level=3):
         super(VaeGan, self).__init__()
 

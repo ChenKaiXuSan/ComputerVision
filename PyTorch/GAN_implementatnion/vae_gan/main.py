@@ -9,7 +9,7 @@ torch.cuda.manual_seed(8)
 
 from network import VaeGan
 from torch.autograd import Variable
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, dataset
 from tensorboardX import SummaryWriter
 from torch.optim import RMSprop, Adam, SGD
 from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR
@@ -46,5 +46,48 @@ if __name__ == "__main__":
     n_epochs = args.n_epochs
     lambda_mse = args.lambda_mse
     lr = args.lr
+    decay_lr = args.decay_lr
+    decay_equilibrium = args.decay_equilibrium
+    slurm = args.slurm
     
-# %%
+    writer = SummaryWriter(comment="_CELEBA_NEW_DATA_STOCK_GAN")
+    net = VaeGan(z_size=z_size, recon_level=recon_level).cuda()
+
+    # dataset
+    if not slurm:
+        dataloader = Dataset.DataLoader(CELEBA(train_folder), batch_size=64,
+                                                shuffle=True, num_workers=4)
+        # dataset for test
+        # if you want to split train from test just move some files in another dir
+        dataloader_test = Dataset.DataLoader(CELEBA(test_folder), batch_size=100,
+                                                shuffle=False, num_workers=1)
+    else:
+        dataloader = Dataset.DataLoader(CELEBA_SLURM(train_folder), bath_size=64,
+                                                shuffle=True, num_workers=1)
+        # dataset for test 
+        # if you want to split train from test just move some files in another dir
+        dataloader_test = Dataset.DataLoader(CELEBA_SLURM(test_folder), batch_size=100,
+                                                shuffle=False, num_workers=1)
+
+    # margin and equilibirum 
+    margin = 0.35
+    equilibirum = 0.68
+
+    # optim-loss
+    # an optimizer for each of the sub-networks, so we can selectively backprop
+    optimizer_encoder = RMSprop(params=net.encoder.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    lr_encoder = ExponentialLR(optimizer_encoder, gamma=decay_lr)
+
+    optimizer_decoder = RMSprop(params=net.decoder.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    lr_decoder = ExponentialLR(optimizer_decoder, gamma=decay_lr)
+
+    optimizer_discriminator = RMSprop(params=net.discriminator.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    lr_discriminator = ExponentialLR(optimizer_discriminator, gamma=decay_lr)
+
+    batch_number = len(dataloader)
+    step_index = 0
+    
+
+
+
+
