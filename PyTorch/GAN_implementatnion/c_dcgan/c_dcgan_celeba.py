@@ -20,7 +20,7 @@ from torch.autograd import Variable
 
 
 # %%
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # %%
 # G(z)
 class generator(nn.Module):

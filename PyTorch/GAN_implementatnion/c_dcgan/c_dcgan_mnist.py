@@ -23,7 +23,7 @@ from torch.autograd import Variable
 
 # %%
 # 指定gpu
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # %%
 def normal_init(m, mean, std):
