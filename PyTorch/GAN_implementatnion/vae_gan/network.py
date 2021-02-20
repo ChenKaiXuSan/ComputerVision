@@ -272,30 +272,74 @@ class VaeGan(nn.Module, object):
     def __call__(self, *args, **kwargs):
         return super(VaeGan, self).__call__(*args, **kwargs)
 
-    @staticmethod # 声明一个静态方法
-    def loss(ten_original, ten_predicted, layer_original, layer_predicted, layer_sampled, labels_original,
-            labels_predicted, labels_sampled, mus, variances):
+    # @staticmethod # 声明一个静态方法
+    # def loss(ten_original, ten_predicted, layer_original, layer_predicted, layer_sampled, labels_original,
+    #         labels_predicted, labels_sampled, mus, variances):
 
-        nle = 0.5*(ten_original.view(len(ten_original), -1) - ten_predicted.view(len(ten_predicted), -1)) ** 2
-        # kl-divergence 
-        kl = -0.5 * torch.sum(-variances.exp() - torch.pow(mus, 2) + variances + 1, 1)              
-        # mse between intermediate layers for both 
-        mse_1 = torch.sum(0.5*(layer_original - layer_predicted) ** 2, 1)
-        mse_2 = torch.sum(0.5*(layer_original - layer_sampled) ** 2, 1)
-        # bce for decoder and discriminator for original, sampled and reconstructed 
-        # the only excluded is the bce_gen_original 
+    #     nle = 0.5*(ten_original.view(len(ten_original), -1) - ten_predicted.view(len(ten_predicted), -1)) ** 2
+    #     # kl-divergence 
+    #     kl = -0.5 * torch.sum(-variances.exp() - torch.pow(mus, 2) + variances + 1, 1)              
+    #     # mse between intermediate layers for both 
+    #     mse_1 = torch.sum(0.5*(layer_original - layer_predicted) ** 2, 1)
+    #     mse_2 = torch.sum(0.5*(layer_original - layer_sampled) ** 2, 1)
+    #     # bce for decoder and discriminator for original, sampled and reconstructed 
+    #     # the only excluded is the bce_gen_original 
+
+    #     bce_dis_original = -torch.log(labels_original + 1e-3)
+    #     bce_dis_sampled = -torch.log(1 - labels_sampled + 1e-3)
+    #     bce_dis_recon = -torch.log(1 - labels_predicted + 1e-3)
+
+    #     bce_gen_sampled = -torch.log(labels_sampled + 1e-3)
+    #     bce_gen_recon = -torch.log(labels_predicted + 1e-3)
+
+    #     return nle, kl, mse_1,mse_2,\
+    #            bce_dis_original, bce_dis_sampled,bce_dis_recon,bce_gen_sampled,bce_gen_recon
+
+
+    @staticmethod
+    def loss(ten_original, ten_predict, layer_original, layer_predicted, labels_original,
+             labels_sampled, mus, variances):
+        """
+        :param ten_original: original images
+        :param ten_predict:  predicted images (output of the decoder)
+        :param layer_original:  intermediate layer for original (intermediate output of the discriminator)
+        :param layer_predicted: intermediate layer for reconstructed (intermediate output of the discriminator)
+        :param labels_original: labels for original (output of the discriminator)
+        :param labels_predicted: labels for reconstructed (output of the discriminator)
+        :param labels_sampled: labels for sampled from gaussian (0,1) (output of the discriminator)
+        :param mus: tensor of means
+        :param variances: tensor of diagonals of log_variances
+        :return:
+        """
+
+        # reconstruction error, not used for the loss but useful to evaluate quality
+        nle = 0.5*(ten_original.view(len(ten_original), -1) - ten_predict.view(len(ten_predict), -1)) ** 2
+        # kl-divergence
+        kl = -0.5 * torch.sum(-variances.exp() - torch.pow(mus,2) + variances + 1, 1)
+        # mse between intermediate layers
+        mse = torch.sum(0.5*(layer_original - layer_predicted) ** 2, 1)
+        # bce for decoder and discriminator for original,sampled and reconstructed
+        # the only excluded is the bce_gen_original
 
         bce_dis_original = -torch.log(labels_original + 1e-3)
         bce_dis_sampled = -torch.log(1 - labels_sampled + 1e-3)
-        bce_dis_recon = -torch.log(1 - labels_predicted + 1e-3)
 
+        bce_gen_original = -torch.log(1-labels_original + 1e-3)
         bce_gen_sampled = -torch.log(labels_sampled + 1e-3)
-        bce_gen_recon = -torch.log(labels_predicted + 1e-3)
-
-        return nle, kl, mse_1,mse_2,\
-               bce_dis_original, bce_dis_sampled,bce_dis_recon,bce_gen_sampled,bce_gen_recon
-
-
+        '''
+        
+        bce_gen_predicted = nn.BCEWithLogitsLoss(size_average=False)(labels_predicted,
+                                         Variable(torch.ones_like(labels_predicted.data).cuda(), requires_grad=False))
+        bce_gen_sampled = nn.BCEWithLogitsLoss(size_average=False)(labels_sampled,
+                                       Variable(torch.ones_like(labels_sampled.data).cuda(), requires_grad=False))
+        bce_dis_original = nn.BCEWithLogitsLoss(size_average=False)(labels_original,
+                                        Variable(torch.ones_like(labels_original.data).cuda(), requires_grad=False))
+        bce_dis_predicted = nn.BCEWithLogitsLoss(size_average=False)(labels_predicted,
+                                         Variable(torch.zeros_like(labels_predicted.data).cuda(), requires_grad=False))
+        bce_dis_sampled = nn.BCEWithLogitsLoss(size_average=False)(labels_sampled,
+                                       Variable(torch.zeros_like(labels_sampled.data).cuda(), requires_grad=False))
+        '''
+        return nle, kl, mse, bce_dis_original, bce_dis_sampled,bce_gen_original,bce_gen_sampled
 
 
 

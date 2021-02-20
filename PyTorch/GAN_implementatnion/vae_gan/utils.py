@@ -1,9 +1,9 @@
-    '''
-    just a class to store a rolling average 
+'''
+just a class to store a rolling average 
 
-    Returns:
-        [type]: measure
-    '''
+Returns:
+    [type]: measure
+'''
 class RollingMeasure(object):
     def __init__(self) -> None:
         super().__init__()

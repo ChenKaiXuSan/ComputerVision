@@ -97,7 +97,7 @@ class CELEBA_SLURM(Dataset):
 
 if __name__ == "__main__":
     # 这里是数据集的位置
-    dataset = CELEBA_SLURM(r"H:/data/img_align_celeba/")
+    dataset = CELEBA_SLURM(".")
     # dataset = CELEBA(r"H:/data/img_align_celeba/")
     gen = DataLoader(dataset, batch_size=128, shuffle=False, num_workers=1)
     from matplotlib import pyplot
@@ -105,13 +105,13 @@ if __name__ == "__main__":
     for i, (b, l) in enumerate(gen):
         print("{}:{}".format(i, len(gen)))
 
-    for i in range(1000):
+    # for i in range(1000):
 
-        a = gen.__iter__().next()
-        # scale between (0, 1)
-        a = (a + 1) / 2
-        for el in a:
-            pyplot.imshow(numpy.transpose(el.numpy(), (1, 2, 0)))
-            pyplot.show()
+    #     a = gen.__iter__().next()
+    #     # scale between (0, 1)
+    #     a = (a + 1) / 2
+    #     for el in a:
+    #         pyplot.imshow(numpy.transpose(el.numpy(), (1, 2, 0)))
+    #         pyplot.show()
  
 # %%
