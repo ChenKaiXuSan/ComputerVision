@@ -246,15 +246,15 @@ for epoch in range(train_epoch):
     G_losses = []
 
     # learning rate decay
-    if (epoch+1) == 11:
-        G_optim.param_groups[0]['lr'] /= 10
-        D_optim.param_groups[0]['lr'] /= 10
-        print('learning rate change!')
+    # if (epoch+1) == 11:
+    #     G_optim.param_groups[0]['lr'] /= 10
+    #     D_optim.param_groups[0]['lr'] /= 10
+    #     print('learning rate change!')
 
-    if (epoch+1) == 16:
-        G_optim.param_groups[0]['lr'] /= 10
-        D_optim.param_groups[0]['lr'] /= 10
-        print('learning rate change!')
+    # if (epoch+1) == 16:
+    #     G_optim.param_groups[0]['lr'] /= 10
+    #     D_optim.param_groups[0]['lr'] /= 10
+    #     print('learning rate change!')
 
     epoch_start_time = time.time()
     y_real_ = torch.ones(batch_size)
@@ -291,7 +291,7 @@ for epoch in range(train_epoch):
         D_fake_loss = BCE_loss(D_result, y_fake_)
         D_fake_score = D_result.data.mean()
 
-        D_train_loss = D_real_loss + D_fake_loss
+        D_train_loss = (D_real_loss + D_fake_loss) / 2 # 取平均值
 
         D_train_loss.backward()
         D_optim.step()

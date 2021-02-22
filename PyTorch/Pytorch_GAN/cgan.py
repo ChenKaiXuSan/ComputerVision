@@ -29,8 +29,8 @@ os.makedirs("images", exist_ok=True)
 # %%
 # 定义参数
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=1, help="number of epochs of training")
-parser.add_argument("--batch_size", type=int, default=512, help="size of the batches")
+parser.add_argument("--n_epochs", type=int, default=50, help="number of epochs of training")
+parser.add_argument("--batch_size", type=int, default=512, help="size of the batches") 
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
@@ -144,7 +144,9 @@ dataloader = torch.utils.data.DataLoader(
         train=True,
         download=True,
         transform=transforms.Compose(
-            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+            [transforms.Resize(opt.img_size), 
+            transforms.ToTensor(), 
+            transforms.Normalize([0.5], [0.5])]
         ),
     ),
     batch_size=opt.batch_size,
@@ -174,10 +176,26 @@ def sample_image(n_row, batches_done):
 
 
 # %%
+def show_train_hist(hist, show=False, save=False, path='train_hist.png'):
+    pass
+# %%
+train_hist = {}
+train_hist['D_losses'] = []
+train_hist['G_losses'] = []
+train_hist['D_real_loss_list'] = []
+train_hist['D_fake_loss_list'] = []
+# %%
 # training 
 
 for epoch in range(opt.n_epochs):
+    print('training start!')
+
     for i, (imgs, labels) in enumerate(dataloader):
+
+        D_losses = []
+        D_fake_loss_list = []
+        D_real_loss_list = []
+        G_losses = []
 
         batch_size = imgs.shape[0]
 
@@ -206,6 +224,8 @@ for epoch in range(opt.n_epochs):
         g_loss.backward()
         optimizers_G.step()
 
+        G_losses.append(g_loss.item())
+
         # train Discriminator
 
         optimizers_D.zero_grad()
@@ -224,6 +244,10 @@ for epoch in range(opt.n_epochs):
         d_loss.backward()
         optimizers_D.step()
 
+        D_fake_loss_list.append(d_fake_loss.item())
+        D_real_loss_list.append(d_real_loss.item())
+        D_losses.append(d_loss.item())
+
         print(
             "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
             % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
@@ -232,10 +256,12 @@ for epoch in range(opt.n_epochs):
         batches_done = epoch * len(dataloader) + i
         if batches_done % opt.sample_interval == 0:
             sample_image(n_row=10, batches_done=batches_done)
+    
+    train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
 
 
 # %%
-input = torch.LongTensor([[1,2,4, 5], [4, 3, 2, 9]])
+input = torch.LongTensor([[1, 2, 4, 5], [4, 3, 2, 9]])
 print(input)
 embedding = nn.Embedding(10, 3)
 print(embedding)
