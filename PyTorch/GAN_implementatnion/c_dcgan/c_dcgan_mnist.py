@@ -31,7 +31,6 @@ def normal_init(m, mean, std):
         m.weight.data.normal_(mean, std)
         m.bias.data.zero_()
 
-
 # %%
 # G(z)
 class generator(nn.Module):
@@ -95,8 +94,8 @@ class discriminator(nn.Module):
 # %%
 # training parameters
 batch_size = 128
-lr = 0.0002
-train_epoch = 30
+lr = 1e-5 # 0.0002
+train_epoch = 60 # 30
 
 
 # %%
@@ -128,6 +127,7 @@ for i in range(9):
     temp = torch.ones(10, 1) + i
     fixed_y_ = torch.cat([fixed_y_, temp], 0)
 
+# 循环结束，fixed_y_ shape (100, 1)
 
 fixed_z_ = fixed_z_.view(-1, 100, 1, 1)
 fixed_y_label_ = torch.zeros(100, 10)
