@@ -129,10 +129,10 @@ for i in range(9):
 
 # 循环结束，fixed_y_ shape (100, 1)
 
-fixed_z_ = fixed_z_.view(-1, 100, 1, 1)
+fixed_z_ = fixed_z_.view(-1, 100, 1, 1) # 100, 100, 1, 1
 fixed_y_label_ = torch.zeros(100, 10)
 fixed_y_label_.scatter_(1, fixed_y_.type(torch.LongTensor), 1)
-fixed_y_label_ = fixed_y_label_.view(-1, 10, 1, 1)
+fixed_y_label_ = fixed_y_label_.view(-1, 10, 1, 1) # 100, 10, 1, 1
 fixed_z_, fixed_y_label_ = Variable(fixed_z_.cuda(), volatile=True), Variable(fixed_y_label_.cuda(), volatile=True)
 
 def show_result(num_epoch, show=False, save=False, path='result.png'):
@@ -169,9 +169,13 @@ def show_train_hist(hist, show=False, save=False, path='Train_hist.png'):
 
     y1 = hist['D_losses']
     y2 = hist['G_losses']
+    y3 = hist['D_real_loss_list']
+    y4 = hist['D_fake_loss_list']
 
-    plt.plot(x, y1, label='D_loss')
+    plt.plot(x, y1, label='D_losses')
     plt.plot(x, y2, label='G_loss')
+    plt.plot(x, y3, label='D_real_loss_list')
+    plt.plot(x, y4, label='D_fake_loss_list')
 
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
@@ -188,7 +192,6 @@ def show_train_hist(hist, show=False, save=False, path='Train_hist.png'):
     else:
         plt.close()
 
-
 # %%
 # data_loader 
 img_size = 32
@@ -201,7 +204,7 @@ transform = transforms.Compose([
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('../data/', train=True, download=True, transform=transform),
-    batch_size = batch_size, 
+    batch_size = batch_size, # 128
     shuffle=True
 )
 
@@ -221,6 +224,8 @@ train_hist['D_losses'] = []
 train_hist['G_losses'] = []
 train_hist['per_epoch_ptimes'] = []
 train_hist['total_ptime'] = []
+train_hist['D_real_loss_list'] = []
+train_hist['D_fake_loss_list'] = []
 
 
 # %%
@@ -235,6 +240,9 @@ print('training start!')
 start_time = time.time()
 for epoch in range(train_epoch):
     D_losses = []
+    D_fake_loss_list = []
+    D_real_loss_list = []
+
     G_losses = []
 
     # learning rate decay
@@ -259,6 +267,7 @@ for epoch in range(train_epoch):
 
         mini_batch = x_.size()[0]
 
+        # 检查mini_batch 和 batch_size
         if mini_batch != batch_size:
             y_real_ = torch.ones(mini_batch)
             y_fake_ = torch.zeros(mini_batch)
@@ -271,9 +280,9 @@ for epoch in range(train_epoch):
         D_real_loss = BCE_loss(D_result, y_real_)
 
         z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1)
-        y_ = (torch.rand(mini_batch, 1) * 10).type(torch.LongTensor).squeeze()
-        y_label_ = onehot[y_]
-        y_fill_ = fill[y_]
+        y_ = (torch.rand(mini_batch, 1) * 10).type(torch.LongTensor).squeeze() # squeeze() 删除大小为1的维度
+        y_label_ = onehot[y_] # 128, 10, 1, 1
+        y_fill_ = fill[y_] # 128, 10, 32, 32
         z_, y_label_, y_fill_ = Variable(z_.cuda()), Variable(y_label_.cuda()), Variable(y_fill_.cuda())
 
         G_result = G(z_, y_label_) # cgan
@@ -287,6 +296,8 @@ for epoch in range(train_epoch):
         D_train_loss.backward()
         D_optim.step()
 
+        D_fake_loss_list.append(D_fake_loss.item())
+        D_real_loss_list.append(D_real_loss.item())
         D_losses.append(D_train_loss.item())
 
         # train generator G
@@ -294,8 +305,8 @@ for epoch in range(train_epoch):
 
         z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1)
         y_ = (torch.rand(mini_batch, 1) * 10).type(torch.LongTensor).squeeze()
-        y_label_ = onehot[y_]
-        y_fill_ = fill[y_]
+        y_label_ = onehot[y_] # 128, 10, 1, 1
+        y_fill_ = fill[y_] # 128, 10, 32, 32
         z_, y_label_, y_fill_ = Variable(z_.cuda()), Variable(y_label_.cuda()), Variable(y_fill_.cuda())
 
         G_result = G(z_, y_label_)
@@ -318,6 +329,8 @@ for epoch in range(train_epoch):
     train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
     train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
     train_hist['per_epoch_ptimes'].append(per_epoch_ptime)
+    train_hist['D_fake_loss_list'].append(torch.mean(torch.FloatTensor(D_fake_loss_list)))
+    train_hist['D_real_loss_list'].append(torch.mean(torch.FloatTensor(D_real_loss_list)))
 
 end_time = time.time()
 total_ptime = end_time - start_time
@@ -338,9 +351,6 @@ for e in range(train_epoch):
     images.append(imageio.imread(img_name))
 
 imageio.mimsave(root + model + 'generation-animation.gif', images, fps=5)
-
-
-# %%
 
 
 
