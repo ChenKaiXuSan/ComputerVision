@@ -258,6 +258,9 @@ for epoch in range(opt.n_epochs):
             sample_image(n_row=10, batches_done=batches_done)
     
     train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
+    train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
+    train_hist['D_fake_loss_list'].append(torch.mean(torch.FloatTensor(D_fake_loss_list)))
+    train_hist['D_real_loss_list'].append(torch.mean(torch.FloatTensor(D_real_loss_list)))
 
 
 # %%
