@@ -203,7 +203,10 @@ def show_train_hist(hist, show=False, save=False, path='./train_hist.png'):
     plt.plot(x, y3, label='D_real_loss_list')
     plt.plot(x, y4, label='D_fake_loss_list')
 
-    plt.xlabel(loc=4)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+
+    plt.legend(loc=4)
     plt.grid(True)
     plt.tight_layout()
 
@@ -307,7 +310,7 @@ for epoch in range(opt.n_epochs):
 
 
 # %%
-show_train_hist(train_hist, save=True, path=train_hist.png)
+show_train_hist(train_hist, save=True, path='train_hist.png')
 
 imageio.mimsave('images/generation-animation.gif', images, fps=5)
 
