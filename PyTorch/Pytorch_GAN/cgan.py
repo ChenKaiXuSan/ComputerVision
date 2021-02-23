@@ -5,6 +5,7 @@ import argparse
 import os 
 import numpy as np
 import math
+from numpy.lib.npyio import save
 
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
@@ -16,6 +17,9 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+
+import matplotlib.pyplot as plt
+import imageio
 
 
 # %%
@@ -176,8 +180,41 @@ def sample_image(n_row, batches_done):
 
 
 # %%
-def show_train_hist(hist, show=False, save=False, path='train_hist.png'):
-    pass
+
+def show_train_hist(hist, show=False, save=False, path='./train_hist.png'):
+    '''
+    show the train loss hist
+
+    Args:
+        hist (dic): loss dic
+        show (bool, optional): if to show the figure. Defaults to False.
+        save (bool, optional): if save figure to the path. Defaults to False.
+        path (str, optional): the figure saved path. Defaults to './train_hist.png'.
+    '''    
+    x = range(len(hist['D_losses']))
+
+    y1 = hist['D_losses']
+    y2 = hist['G_losses']
+    y3 = hist['D_real_loss_list']
+    y4 = hist['D_fake_loss_list']
+
+    plt.plot(x, y1, label='D_losses')
+    plt.plot(x, y2, label='G_loss')
+    plt.plot(x, y3, label='D_real_loss_list')
+    plt.plot(x, y4, label='D_fake_loss_list')
+
+    plt.xlabel(loc=4)
+    plt.grid(True)
+    plt.tight_layout()
+
+    if save:
+        plt.savefig(path)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
 # %%
 train_hist = {}
 train_hist['D_losses'] = []
@@ -187,8 +224,8 @@ train_hist['D_fake_loss_list'] = []
 # %%
 # training 
 
+print('training start!')
 for epoch in range(opt.n_epochs):
-    print('training start!')
 
     for i, (imgs, labels) in enumerate(dataloader):
 
@@ -256,11 +293,24 @@ for epoch in range(opt.n_epochs):
         batches_done = epoch * len(dataloader) + i
         if batches_done % opt.sample_interval == 0:
             sample_image(n_row=10, batches_done=batches_done)
+            save_name = batches_done
+
+        images = []
+        img_name = 'images/' + str(save_name) + '.png'
+        images.append(imageio.imread(img_name))
+
     
     train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
     train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
     train_hist['D_fake_loss_list'].append(torch.mean(torch.FloatTensor(D_fake_loss_list)))
     train_hist['D_real_loss_list'].append(torch.mean(torch.FloatTensor(D_real_loss_list)))
+
+
+# %%
+show_train_hist(train_hist, save=True, path=train_hist.png)
+
+imageio.mimsave('images/generation-animation.gif', images, fps=5)
+
 
 
 # %%
