@@ -93,15 +93,15 @@ class discriminator(nn.Module):
 
 # %%
 # training parameters
-batch_size = 128
-lr = 1e-5 # 0.0002
-train_epoch = 60 # 30
+batch_size = 64 # 128
+lr = 0.0002
+train_epoch = 100 # 30
 
 
 # %%
 # network
-G = generator(128)
-D = discriminator(128)
+G = generator(64) # 128
+D = discriminator(64) # 128
 
 G.weight_init(mean=0.0, std=0.02)
 D.weight_init(mean=0.0, std=0.02)
@@ -194,7 +194,7 @@ def show_train_hist(hist, show=False, save=False, path='Train_hist.png'):
 
 # %%
 # data_loader 
-img_size = 32
+img_size = 28 
 transform = transforms.Compose([
     transforms.Scale(img_size),
     transforms.ToTensor(),
@@ -204,7 +204,7 @@ transform = transforms.Compose([
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('../data/', train=True, download=True, transform=transform),
-    batch_size = batch_size, # 128
+    batch_size = batch_size, 
     shuffle=True
 )
 
