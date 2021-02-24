@@ -194,7 +194,7 @@ def show_train_hist(hist, show=False, save=False, path='Train_hist.png'):
 
 # %%
 # data_loader 
-img_size = 28 
+img_size = 32
 transform = transforms.Compose([
     transforms.Scale(img_size),
     transforms.ToTensor(),
