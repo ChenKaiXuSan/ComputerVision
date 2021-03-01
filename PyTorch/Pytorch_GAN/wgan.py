@@ -5,7 +5,9 @@ import numpy as np
 import math
 import sys
 from numpy.core.fromnumeric import transpose
-from numpy.lib.npyio import save 
+from numpy.lib.npyio import save
+from torch.utils.tensorboard.summary import image
+import torchvision 
 
 import torchvision.transforms as transforms 
 from torchvision.utils import save_image
@@ -18,12 +20,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-sys.path.append('/home/xchen/ComputerVision/utils')
-# sys.path.append('H:/ComputerVision/utils')
+from torch.utils.tensorboard import SummaryWriter
+
+# sys.path.append('/home/xchen/ComputerVision/utils')
+sys.path.append('H:/ComputerVision/utils')
 
 # %%
 os.makedirs('images/wgan', exist_ok=True)
 
+# output to ./runs/
+writer = SummaryWriter()
 # %%
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
@@ -95,7 +101,6 @@ if cuda:
     generator.cuda()
     discriminator.cuda()
 
-
 # %%
 from UsePlatform import getSystemName
 
@@ -126,6 +131,14 @@ optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=opt.lr)
 optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=opt.lr)
 
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+
+# %%
+# 把图片放到tensorboard中
+img, label = next(iter(dataloader))
+
+grid = torchvision.utils.make_grid(img)
+writer.add_image('images', grid, 0)
+writer.add_graph(discriminator, img.cuda())
 
 # %%
 train_hist = {}
@@ -167,6 +180,7 @@ for epoch in range(opt.n_epochs):
         optimizer_D.step()
 
         D_losses.append(loss_D.item())
+        writer.add_scalar('Loss/D_loss', loss_D, i)
 
         # clip weights of discriminator
         for p in discriminator.parameters():
@@ -187,7 +201,8 @@ for epoch in range(opt.n_epochs):
             loss_G.backward()
             optimizer_G.step()
             
-            D_losses.append(loss_G.item())
+            G_losses.append(loss_G.item())
+            writer.add_scalar('Loss/G_loss', loss_G, i)
         
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
