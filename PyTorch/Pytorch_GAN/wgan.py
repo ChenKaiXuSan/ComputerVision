@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-sys.path.append('../../../utils')
+sys.path.append('/home/xchen/ComputerVision/utils')
 # sys.path.append('H:/ComputerVision/utils')
 
 # %%
