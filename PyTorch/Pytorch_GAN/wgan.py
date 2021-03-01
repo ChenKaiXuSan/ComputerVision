@@ -3,7 +3,9 @@ import argparse
 import os 
 import numpy as np
 import math
-import sys 
+import sys
+from numpy.core.fromnumeric import transpose
+from numpy.lib.npyio import save 
 
 import torchvision.transforms as transforms 
 from torchvision.utils import save_image
@@ -15,6 +17,8 @@ from torch.autograd import Variable, variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+
+sys.path.append('H:/ComputerVision/utils')
 
 # %%
 os.makedirs('images/wgan', exist_ok=True)
@@ -92,14 +96,26 @@ if cuda:
 
 
 # %%
-# configure data loader 
-dataloader = DataLoader(
-    datasets.MNIST(
+from UsePlatform import getSystemName
+
+if getSystemName() == "Windows":
+    dst = datasets.MNIST(
         "../data/",
         train=True,
-        download=True,
+        download=False,
         transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
-    ),
+    )
+if getSystemName() == "Linux":
+    dst = datasets.MNIST(
+        '/home/xchen/data/',
+        train=True,
+        download=False,
+        transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
+    )
+
+# configure data loader 
+dataloader = DataLoader(
+    dst,
     batch_size= opt.batch_size,
     shuffle=True,
 )
@@ -111,12 +127,22 @@ optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=opt.lr)
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 # %%
+train_hist = {}
+train_hist['D_losses'] = []
+train_hist['G_losses'] = []
+from LossHistory import show_train_hist
+
+# %%
 # Training
 batch_done = 0
+print('training start!')
 for epoch in range(opt.n_epochs):
 
     for i, (imgs, _) in enumerate(dataloader):
         
+        D_losses = []
+        G_losses = []
+
         # configure input 
         real_imgs = Variable(imgs.type(Tensor)) # 这个方法要被废弃了
         # real_imgs = imgs.type(Tensor).requires_grad = True
@@ -138,6 +164,8 @@ for epoch in range(opt.n_epochs):
         loss_D.backward()
         optimizer_D.step()
 
+        D_losses.append(loss_D.item())
+
         # clip weights of discriminator
         for p in discriminator.parameters():
             p.data.clamp_(-opt.clip_value, opt.clip_value)
@@ -156,7 +184,9 @@ for epoch in range(opt.n_epochs):
 
             loss_G.backward()
             optimizer_G.step()
-
+            
+            D_losses.append(loss_G.item())
+        
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
                 % (epoch, opt.n_epochs, batch_done % len(dataloader), len(dataloader), loss_D.item(), loss_G.item())
@@ -166,6 +196,11 @@ for epoch in range(opt.n_epochs):
             save_image(gen_imgs.data[:25], "images/wgan/%d.png" % batch_done, nrow=5, normalize=True)
         batch_done += 1
 
+    train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
+    train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
+
+# %%
+show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
 
 
 
