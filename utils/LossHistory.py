@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from numpy.lib.npyio import save
 
 def show_train_hist(hist, show=False, save=False, path='./train_hist.png'):
 
@@ -24,5 +25,19 @@ def show_train_hist(hist, show=False, save=False, path='./train_hist.png'):
         plt.show()
     else:
         plt.close()
+
+import imageio
+
+def show_train_animation(path, save_name):
+    images = []
+    for name in save_name:
+        img_name = path + str(name) + '.png'
+
+    images.append(imageio.imread(img_name))
+
+    imageio.mimsave(path + 'generation-animation.gif', images, fps=5)
+    return "sucess save image animation"
+
+
 
     

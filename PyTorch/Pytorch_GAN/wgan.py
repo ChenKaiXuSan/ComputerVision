@@ -131,7 +131,8 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 train_hist = {}
 train_hist['D_losses'] = []
 train_hist['G_losses'] = []
-from LossHistory import show_train_hist
+import LossHistory
+save_name = []
 
 # %%
 # Training
@@ -195,10 +196,15 @@ for epoch in range(opt.n_epochs):
         
         if batch_done % opt.sample_interval == 0:
             save_image(gen_imgs.data[:25], "images/wgan/%d.png" % batch_done, nrow=5, normalize=True)
+            save_name.append(batch_done)
         batch_done += 1
+
+
 
     train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
     train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
+
+    LossHistory.show_train_animation('./images/wgan/', save_name)
 
 # %%
 show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
