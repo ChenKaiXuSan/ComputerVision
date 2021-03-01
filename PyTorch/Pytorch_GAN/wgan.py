@@ -136,8 +136,8 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # 把图片放到tensorboard中
 img, label = next(iter(dataloader))
 
-grid = torchvision.utils.make_grid(img)
-writer.add_image('images', grid, 0)
+# grid = torchvision.utils.make_grid(img)
+# writer.add_image('images', grid, 0)
 writer.add_graph(discriminator, img.cuda())
 
 # %%
@@ -180,7 +180,8 @@ for epoch in range(opt.n_epochs):
         optimizer_D.step()
 
         D_losses.append(loss_D.item())
-        writer.add_scalar('Loss/D_loss', loss_D, i)
+        writer.add_scalar('Loss/D_loss_with_epoch', loss_D, epoch)
+        writer.add_scalar('Loss/D_loss_with_iter', loss_D, i)
 
         # clip weights of discriminator
         for p in discriminator.parameters():
@@ -202,13 +203,18 @@ for epoch in range(opt.n_epochs):
             optimizer_G.step()
             
             G_losses.append(loss_G.item())
-            writer.add_scalar('Loss/G_loss', loss_G, i)
+            writer.add_scalar('Loss/G_loss_with_epoch', loss_G, epoch)
+            writer.add_scalar('Loss/G_loss_with_iter', loss_G, i)
         
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
                 % (epoch, opt.n_epochs, batch_done % len(dataloader), len(dataloader), loss_D.item(), loss_G.item())
             )
         
+        grid = torchvision.utils.make_grid(imgs)
+        writer.add_image('images',grid, 0)
+    
+
         if batch_done % opt.sample_interval == 0:
             save_image(gen_imgs.data[:25], "images/wgan/%d.png" % batch_done, nrow=5, normalize=True)
             save_name.append(batch_done)
@@ -222,7 +228,7 @@ for epoch in range(opt.n_epochs):
     LossHistory.show_train_animation('./images/wgan/', save_name)
 
 # %%
-show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
+LossHistory.show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
 
 
 
