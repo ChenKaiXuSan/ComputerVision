@@ -22,8 +22,8 @@ import torch
 
 from torch.utils.tensorboard import SummaryWriter
 
-# sys.path.append('/home/xchen/ComputerVision/utils')
-sys.path.append('H:/ComputerVision/utils')
+sys.path.append('/home/xchen/ComputerVision/utils')
+# sys.path.append('H:/ComputerVision/utils')
 
 # %%
 os.makedirs('images/wgan', exist_ok=True)
