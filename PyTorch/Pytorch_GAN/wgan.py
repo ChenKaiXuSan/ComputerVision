@@ -97,7 +97,7 @@ dataloader = DataLoader(
     datasets.MNIST(
         "../data/",
         train=True,
-        download=False,
+        download=True,
         transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
     ),
     batch_size= opt.batch_size,
