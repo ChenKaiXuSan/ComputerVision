@@ -11,4 +11,6 @@ PyTorch/PyTorch_Tutorials/data/
 PyTorch/PyTorch_Tutorials/runs/
 PyTorch/input
 data/
-PyTorch/Pytorch_GAN/runs
+PyTorch/Pytorch_GAN/runs/
+PyTorch/GAN_implementatnion/w_dcgan/runs/
+PyTorch/GAN_implementatnion/w_dcgan/images/
