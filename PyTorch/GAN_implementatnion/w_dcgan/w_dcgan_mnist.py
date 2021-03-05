@@ -83,9 +83,9 @@ class Generator(nn.Module):
         )
 
     def forward(self, z):
-        out = self.l1(z)
-        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
-        img = self.conv_blocks(out)
+        out = self.l1(z) # 64, 8192
+        out = out.view(out.shape[0], 128, self.init_size, self.init_size) # 64, 128, 8, 8
+        img = self.conv_blocks(out) # 64, 1, 32, 32
         return img
 # %%
 class Discriminator(nn.Module):
@@ -171,7 +171,7 @@ for epoch in range(opt.n_epochs):
         optimizer_D.zero_grad()
 
         # sample noise as generator input
-        z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim))))
+        z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))) # 64, 100
         # z = Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))
         # z.requires_grad = True
 
