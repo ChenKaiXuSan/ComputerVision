@@ -18,6 +18,9 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 os.makedirs("images", exist_ok=True)
+
+# 设置gpu
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 # %%
 # 设置参数
 parser = argparse.ArgumentParser()
