@@ -10,6 +10,7 @@ from torchvision.utils import save_image
 
 from torch.utils.data import DataLoader
 from torchvision import datasets 
+from torch.autograd import Variable, variable
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,7 +25,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 # %%
 # 设置参数
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=50, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.00005, help="learning rate")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
@@ -149,9 +150,9 @@ optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=opt.lr)
 
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # %%
-img, _ = next(iter(dataloader))
+# img, _ = next(iter(dataloader))
 
-writer.add_graph(discriminator, img.cuda())
+# writer.add_graph(discriminator, img.cuda())
 # %%
 # Training
 batch_done = 0
@@ -161,16 +162,18 @@ for epoch in range(opt.n_epochs):
     for i, (imgs, _) in enumerate(dataloader):
 
         # configure input
-        real_imgs = imgs.type(Tensor)
-        real_imgs.requires_grid = True
+        real_imgs = Variable(imgs.type(Tensor))
+        # real_imgs = imgs.type(Tensor)
+        # real_imgs.requires_grid = True
 
         # train discriminator
 
         optimizer_D.zero_grad()
 
         # sample noise as generator input
-        z = Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))
-        z.requires_grad = True
+        z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim))))
+        # z = Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))
+        # z.requires_grad = True
 
         # generate a batch of images 
         fake_imgs = generator(z).detach()
