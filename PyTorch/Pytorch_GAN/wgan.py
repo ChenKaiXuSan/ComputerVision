@@ -180,8 +180,8 @@ for epoch in range(opt.n_epochs):
         optimizer_D.step()
 
         D_losses.append(loss_D.item())
-        writer.add_scalar('Loss/D_loss_with_epoch', loss_D, epoch)
-        writer.add_scalar('Loss/D_loss_with_iter', loss_D, i)
+        writer.add_scalar('epoch/D_loss_with_epoch', loss_D, epoch)
+        writer.add_scalar('iter/D_loss_with_iter', loss_D, i)
 
         # clip weights of discriminator
         for p in discriminator.parameters():
@@ -203,8 +203,8 @@ for epoch in range(opt.n_epochs):
             optimizer_G.step()
             
             G_losses.append(loss_G.item())
-            writer.add_scalar('Loss/G_loss_with_epoch', loss_G, epoch)
-            writer.add_scalar('Loss/G_loss_with_iter', loss_G, i)
+            writer.add_scalar('epoch/G_loss_with_epoch', loss_G, epoch)
+            writer.add_scalar('iter/G_loss_with_iter', loss_G, i)
         
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
@@ -228,6 +228,7 @@ for epoch in range(opt.n_epochs):
     LossHistory.show_train_animation('./images/wgan/', save_name)
 
 # %%
+writer.close()
 LossHistory.show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
 
 
