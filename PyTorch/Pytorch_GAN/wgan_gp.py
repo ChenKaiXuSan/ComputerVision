@@ -23,10 +23,10 @@ from torch.utils.tensorboard import SummaryWriter
 # %%
 import shutil
 # 删除文件夹
-shutil.rmtree("images/wgan_gp")
 
 os.makedirs("images/wgan_gp", exist_ok=True)
-
+shutil.rmtree("images/wgan_gp")
+os.makedirs("images/wgan_gp", exist_ok=True)
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # %%
 parser = argparse.ArgumentParser()
