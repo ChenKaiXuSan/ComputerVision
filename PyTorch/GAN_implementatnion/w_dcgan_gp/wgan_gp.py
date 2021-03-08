@@ -24,20 +24,20 @@ from torch.utils.tensorboard import SummaryWriter
 import shutil
 # 删除文件夹
 
-os.makedirs("images/wgan_gp", exist_ok=True)
-shutil.rmtree("images/wgan_gp")
-os.makedirs("images/wgan_gp", exist_ok=True)
+# os.makedirs("../images/wgan_gp", exist_ok=True)
+# shutil.rmtree("../images/wgan_gp")
+os.makedirs("../images/wgan_gp", exist_ok=True)
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # %%
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=100, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
-parser.add_argument("--img_size", type=int, default=28, help="size of each image dimension")
+parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
 parser.add_argument("--channels", type=int, default=1, help="number of image channels")
 parser.add_argument("--n_critic", type=int, default=5, help="number of training steps for discriminator per iter")
 parser.add_argument("--clip_value", type=float, default=0.01, help="lower and upper clip value for disc. weights")
@@ -52,34 +52,72 @@ cuda = True if torch.cuda.is_available() else False
 
 writer = SummaryWriter()
 # %%
+def weight_init_normal(m):
+    classname = m.__class__.__name__
+    if classname.find("Conv") != -1:
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find("BatchNorm2d") != -1:
+        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+        torch.nn.init.constant_(m.bias.data, 0.0)
+
+# %%
 class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        def block(in_feat, out_feat, normalize=True):
-            layers = [nn.Linear(in_feat, out_feat)]
-            if normalize:
-                layers.append(nn.BatchNorm1d(out_feat, 0.8))
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
-            return layers
-
         self.model = nn.Sequential(
-            *block(opt.latent_dim, 128, normalize=False),
-            *block(128, 256),
-            *block(256, 512),
-            *block(512, 1024),
-            nn.Linear(1024, int(np.prod(img_shape))),
-            nn.Tanh()
+            # z latent vector 100
+            nn.ConvTranspose2d(100, 1024, 4, 1, 0),
+            nn.BatchNorm2d(1024),
+            nn.ReLU(True),
+
+            # 1024, 4, 4
+            nn.ConvTranspose2d(1024, 512, 4, 2, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True),
+
+            # 512, 8, 8
+            nn.ConvTranspose2d(512, 256, 4, 2, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(True),
+
+            # 256, 16, 16
+            nn.ConvTranspose2d(256, opt.channels, 4, 2, 1),
         )
+        # output image c, 32, 32
+
+        self.output = nn.Tanh()
 
     def forward(self, z):
         img = self.model(z)
-        img = img.view(img.shape[0], *img_shape)
-        return img
+        return self.output(img)
 # %%
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
+
+        self.main_module = nn.Sequential(
+            # image c, 32, 32
+            nn.Conv2d(opt.channels, 256, 4, 2, 1),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # 256, 16, 16
+            nn.Conv2d(256, 512, 4, 2, 1),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # 512, 8, 8
+            nn.Conv2d(512, 1024, 4, 2, 1),
+            nn.BatchNorm2d(1024),
+            nn.LeakyReLU(0.2, inplace=True),
+        )
+        # output image 1024, 4, 4
+
+        self.output = nn.Sequential(
+            # do not apply sigmoid
+            nn.Conv2d(1024, 1024, 4, 1, 0)
+        )
 
         self.model = nn.Sequential(
             nn.Linear(int(np.prod(img_shape)), 512),
@@ -90,8 +128,12 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, img):
-        img_flat = img.view(img.shape[0], -1) # 64, 784
-        validity = self.model(img_flat) # 64, 1
+        # img_flat = img.view(img.shape[0], -1)
+        img = self.main_module(img) # 64, 1024, 4, 4
+        img = self.output(img) # 64, 1024, 1, 1
+        img_flat = torch.squeeze(img).view(img.shape[0], -1) # 64, 1024
+        # img_vector = img.view(np.prod(img_shape))
+        validity = self.model(img_flat)
         return validity
 # %%
 # loss weight for gradient penalty 
@@ -173,7 +215,7 @@ for epoch in range(opt.n_epochs):
         optimizer_D.zero_grad()
 
         # sample noise as generator input
-        z = Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))
+        z = Tensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim, 1, 1)))
         z.requires_grad = True
 
         # generate a batch of images 
@@ -191,8 +233,8 @@ for epoch in range(opt.n_epochs):
         d_loss.backward()
         optimizer_D.step()
 
-        writer.add_scalar("epoch", d_loss, epoch)
-        writer.add_scalar("iter", d_loss, i)
+        writer.add_scalar("epoch/d_loss", d_loss, epoch)
+        writer.add_scalar("iter/dloss/" + str(epoch), d_loss, i)
 
         optimizer_G.zero_grad()
 
@@ -211,10 +253,10 @@ for epoch in range(opt.n_epochs):
             g_loss.backward()
             optimizer_G.step()
 
-            writer.add_scalar("epoch", g_loss, epoch)
-            writer.add_scalar("iter", g_loss, i)
+            writer.add_scalar("epoch/g_loss", g_loss, epoch)
+            writer.add_scalar("iter/g_loss" + str(i % opt.n_critic), g_loss, i)
             writer.add_scalars("epoch", {'g_loss':g_loss, 'd_loss':d_loss}, epoch)
-            writer.add_scalars("iter", {'g_loss':g_loss, 'd_loss':d_loss}, i)          
+            writer.add_scalars("iter" + str(i % opt.n_critic), {'g_loss':g_loss, 'd_loss':d_loss}, i)          
 
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
@@ -222,7 +264,7 @@ for epoch in range(opt.n_epochs):
             )
             
             if batches_done % opt.sample_interval == 0:
-                save_image(fake_imgs.data[:25], "images/wgan_gp/%d.png" % batches_done, nrow=5, normalize=True)
+                save_image(fake_imgs.data[:25], "../images/wgan_gp/%d.png" % batches_done, nrow=5, normalize=True)
                 grid = torchvision.utils.make_grid(fake_imgs)
                 writer.add_image('fake image', grid, 0)
 
