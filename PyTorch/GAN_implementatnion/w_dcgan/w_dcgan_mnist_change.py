@@ -194,7 +194,7 @@ for epoch in range(opt.n_epochs):
 
         # 记录loss
         writer.add_scalar('epoch/D_loss_with_epoch', loss_D, epoch)
-        writer.add_scalar('iter/D_loss_with_iter', loss_D, i)
+        writer.add_scalar('iter/D_loss_with_iter/' + str(epoch), loss_D, i)
 
         # clip weights of discriminator 
         for p in discriminator.parameters():
@@ -216,14 +216,14 @@ for epoch in range(opt.n_epochs):
             optimizer_G.step()
 
             writer.add_scalar('epoch/G_loss_with_epoch', loss_G, epoch)
-            writer.add_scalar('iter/G_loss_with_iter', loss_G, i)
+            writer.add_scalar('iter/G_loss_with_iter/' + str(epoch), loss_G, i)
 
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
                 % (epoch, opt.n_epochs, batch_done % len(dataloader), len(dataloader), loss_D.item(), loss_G.item())
             )
 
-            writer.add_scalars('iter/loss', {'G_loss':loss_G, 'D_loss':loss_D}, i)
+            writer.add_scalars('iter/loss_' + str(epoch), {'G_loss':loss_G, 'D_loss':loss_D}, i)
 
         writer.add_scalars('epoch/loss', {'G_loss':loss_G, 'D_loss':loss_D}, epoch)
         # save the gen imgs into tensorboard

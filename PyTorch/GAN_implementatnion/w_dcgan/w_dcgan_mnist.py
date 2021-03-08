@@ -1,3 +1,6 @@
+# %% [markdown]
+# 这一版本不学习，应该是网络结构的问题。
+
 # %% 
 import argparse
 import os 
