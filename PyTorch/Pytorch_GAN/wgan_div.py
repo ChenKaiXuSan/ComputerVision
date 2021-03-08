@@ -4,8 +4,6 @@ import os
 import numpy as np
 import math
 import sys
-from torch._C import autocast_decrement_nesting
-from torch.functional import Tensor
 import torchvision
 
 import torchvision.transforms as transforms
