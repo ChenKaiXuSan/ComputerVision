@@ -26,10 +26,10 @@ sys.path.append('/home/xchen/ComputerVision/utils')
 # sys.path.append('H:/ComputerVision/utils')
 
 # %%
-os.makedirs('images/wgan', exist_ok=True)
+os.makedirs('images/wgan_cifar10', exist_ok=True)
 
 # output to ./runs/
-writer = SummaryWriter()
+writer = SummaryWriter('./runs/cifar10')
 # %%
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
@@ -38,7 +38,7 @@ parser.add_argument("--lr", type=float, default=0.00005, help="learning rate")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
 parser.add_argument("--img_size", type=int, default=64, help="size of each image dimension")
-parser.add_argument("--channels", type=int, default=1, help="number of image channels")
+parser.add_argument("--channels", type=int, default=3, help="number of image channels")
 parser.add_argument("--n_critic", type=int, default=5, help="number of training steps for discriminator per iter")
 parser.add_argument("--clip_value", type=float, default=0.01, help="lower and upper clip value for disc. weights")
 parser.add_argument("--sample_interval", type=int, default=400, help="interval betwen image samples")
@@ -102,23 +102,30 @@ if cuda:
     discriminator.cuda()
 
 # %%
-from UsePlatform import getSystemName
+# from UsePlatform import getSystemName
 
-if getSystemName() == "Windows":
-    dst = datasets.MNIST(
-        "../data/",
-        train=True,
-        download=False,
-        transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
+# if getSystemName() == "Windows":
+#     dst = datasets.MNIST(
+#         "../data/",
+#         train=True,
+#         download=False,
+#         transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
+#     )
+# if getSystemName() == "Linux":
+#     dst = datasets.MNIST(
+#         '/home/xchen/data/',
+#         train=True,
+#         download=False,
+#         transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
+#     )
+dst = datasets.CIFAR10(
+    '../GAN_implementatnion/data/',
+    train=True,
+    download=True,
+    transform=transforms.Compose(
+        [transforms.ToTensor(), transforms.Resize(opt.img_size),transforms.Normalize([0.5], [0.5])]
     )
-if getSystemName() == "Linux":
-    dst = datasets.MNIST(
-        '/home/xchen/data/',
-        train=True,
-        download=False,
-        transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]),
-    )
-
+)
 # configure data loader 
 dataloader = DataLoader(
     dst,
@@ -134,17 +141,17 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 # %%
 # 把图片放到tensorboard中
-img, label = next(iter(dataloader))
+# img, label = next(iter(dataloader))
 
-# grid = torchvision.utils.make_grid(img)
-# writer.add_image('images', grid, 0)
-writer.add_graph(discriminator, img.cuda())
+# # grid = torchvision.utils.make_grid(img)
+# # writer.add_image('images', grid, 0)
+# writer.add_graph(discriminator, img.cuda())
 
 # %%
 train_hist = {}
 train_hist['D_losses'] = []
 train_hist['G_losses'] = []
-import LossHistory
+# import LossHistory
 save_name = []
 
 # %%
@@ -181,7 +188,7 @@ for epoch in range(opt.n_epochs):
 
         D_losses.append(loss_D.item())
         writer.add_scalar('epoch/D_loss_with_epoch', loss_D, epoch)
-        writer.add_scalar('iter/D_loss_with_iter', loss_D, i)
+        # writer.add_scalar('iter/D_loss_with_iter', loss_D, i)
 
         # clip weights of discriminator
         for p in discriminator.parameters():
@@ -204,7 +211,7 @@ for epoch in range(opt.n_epochs):
             
             G_losses.append(loss_G.item())
             writer.add_scalar('epoch/G_loss_with_epoch', loss_G, epoch)
-            writer.add_scalar('iter/G_loss_with_iter', loss_G, i)
+            # writer.add_scalar('iter/G_loss_with_iter', loss_G, i)
         
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
@@ -216,7 +223,7 @@ for epoch in range(opt.n_epochs):
     
 
         if batch_done % opt.sample_interval == 0:
-            save_image(gen_imgs.data[:25], "images/wgan/%d.png" % batch_done, nrow=5, normalize=True)
+            save_image(gen_imgs.data[:25], "images/wgan_cifar10/%d.png" % batch_done, nrow=5, normalize=True)
             save_name.append(batch_done)
         batch_done += 1
 
