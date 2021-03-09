@@ -27,7 +27,7 @@ import shutil
 os.makedirs("../images/wgan_gp", exist_ok=True)
 shutil.rmtree("../images/wgan_gp")
 os.makedirs("../images/wgan_gp", exist_ok=True)
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # %%
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=100, help="number of epochs of training")
