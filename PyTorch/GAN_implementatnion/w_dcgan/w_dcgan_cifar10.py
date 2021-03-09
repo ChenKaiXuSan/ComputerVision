@@ -19,6 +19,9 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 os.makedirs("../images/wgan_cifar10", exist_ok=True)
+import shutil
+shutil.rmtree("../images/wgan_cifar10")
+os.makedirs("../images/wgan_cifar10", exist_ok=True)
 
 # 设置gpu
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
@@ -240,10 +243,10 @@ for epoch in range(opt.n_epochs):
         if batch_done % opt.sample_interval == 0:
 
             # save the gen imgs into tensorboard
-            grid = torchvision.utils.make_grid(gen_imgs)
-            images.append(grid)
-            writer.add_images('images', images, 0)
-            save_image(gen_imgs.data[:25], 'images/%d.png' % batch_done, nrow=5, normalize=True)
+            # grid = torchvision.utils.make_grid(gen_imgs)
+            # images.append(grid)
+            # writer.add_images('images', grid, 0)
+            save_image(gen_imgs.data[:25], '../images/wgan_cifar10/%d.png' % batch_done, nrow=5, normalize=True)
         batch_done += 1
 
 # %%
