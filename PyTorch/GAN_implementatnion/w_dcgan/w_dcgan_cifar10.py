@@ -33,7 +33,7 @@ parser.add_argument("--batch_size", type=int, default=64, help="size of the batc
 parser.add_argument("--lr", type=float, default=0.00005, help="learning rate")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
-parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
+parser.add_argument("--img_size", type=int, default=64, help="size of each image dimension")
 parser.add_argument("--channels", type=int, default=3, help="number of image channels")
 parser.add_argument("--n_critic", type=int, default=5, help="number of training steps for discriminator per iter")
 parser.add_argument("--clip_value", type=float, default=0.01, help="lower and upper clip value for disc. weights")
@@ -85,9 +85,14 @@ class Generator(nn.Module):
             nn.ReLU(True),
 
             # 256, 16, 16
-            nn.ConvTranspose2d(256, opt.channels, 4, 2, 1)
+            nn.ConvTranspose2d(256, 128, 4, 2, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(True),
+
+            # 128, 32, 32
+            nn.ConvTranspose2d(128, opt.channels, 4, 2, 1)
         )
-        # output of main module > image c x 32 x 32
+        # output of main module > image c x 64 x 64
 
         self.output = nn.Tanh()
 
@@ -101,8 +106,13 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.main_module = nn.Sequential(
-            # image c, 32, 32
-            nn.Conv2d(opt.channels, 256, 4, 2, 1),
+            # image c, 64, 64
+            nn.Conv2d(opt.channels, 128, 4, 2, 1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # 128, 32, 32
+            nn.Conv2d(128, 256, 4, 2, 1),
             nn.BatchNorm2d(256),
             nn.LeakyReLU(0.2, inplace=True),
 
@@ -178,6 +188,7 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 images = []
 batch_done = 0
 print('Training start!')
+print(opt.__dict__)
 for epoch in range(opt.n_epochs):
     
     for i, (imgs, _) in enumerate(dataloader):
@@ -236,8 +247,8 @@ for epoch in range(opt.n_epochs):
             )
 
             # writer.add_scalars('iter/loss_' + str(epoch), {'G_loss':loss_G, 'D_loss':loss_D}, i)
+            writer.add_scalars('epoch/loss', {'G_loss':loss_G, 'D_loss':loss_D}, epoch)
 
-        writer.add_scalars('epoch/loss', {'G_loss':loss_G, 'D_loss':loss_D}, epoch)
 
         # 每400个图片保存一次生成的图片
         if batch_done % opt.sample_interval == 0:
