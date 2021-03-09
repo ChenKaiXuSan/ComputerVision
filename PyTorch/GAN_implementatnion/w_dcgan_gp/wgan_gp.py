@@ -18,14 +18,14 @@ import torch.nn.functional as F
 import torch
 import torch.optim as optims
 
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 
 # %%
 import shutil
 # 删除文件夹
 
-# os.makedirs("../images/wgan_gp", exist_ok=True)
-# shutil.rmtree("../images/wgan_gp")
+os.makedirs("../images/wgan_gp", exist_ok=True)
+shutil.rmtree("../images/wgan_gp")
 os.makedirs("../images/wgan_gp", exist_ok=True)
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # %%
@@ -37,7 +37,7 @@ parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first 
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
-parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
+parser.add_argument("--img_size", type=int, default=64, help="size of each image dimension")
 parser.add_argument("--channels", type=int, default=1, help="number of image channels")
 parser.add_argument("--n_critic", type=int, default=5, help="number of training steps for discriminator per iter")
 parser.add_argument("--clip_value", type=float, default=0.01, help="lower and upper clip value for disc. weights")
@@ -82,23 +82,35 @@ class Generator(nn.Module):
             nn.ReLU(True),
 
             # 256, 16, 16
-            nn.ConvTranspose2d(256, opt.channels, 4, 2, 1),
+            nn.ConvTranspose2d(256, 128, 4, 2, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(True),
+
+            # nn.ConvTranspose2d(256, opt.channels, 4, 2, 1),
+            # 128, 32, 32
+            nn.ConvTranspose2d(128, opt.channels, 4, 2, 1),
         )
-        # output image c, 32, 32
+        # output image c, 64, 64
 
         self.output = nn.Tanh()
 
     def forward(self, z):
         img = self.model(z)
         return self.output(img)
+
 # %%
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
 
         self.main_module = nn.Sequential(
-            # image c, 32, 32
-            nn.Conv2d(opt.channels, 256, 4, 2, 1),
+            # image c, 64, 64
+            nn.Conv2d(opt.channels, 128, 4, 2, 1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # 128, 32, 32
+            nn.Conv2d(128, 256, 4, 2, 1),
             nn.BatchNorm2d(256),
             nn.LeakyReLU(0.2, inplace=True),
 
@@ -116,7 +128,7 @@ class Discriminator(nn.Module):
 
         self.output = nn.Sequential(
             # do not apply sigmoid
-            nn.Conv2d(1024, 1024, 4, 1, 0)
+            nn.Conv2d(1024, 1, 4, 1, 0)
         )
 
         self.model = nn.Sequential(
@@ -131,10 +143,10 @@ class Discriminator(nn.Module):
         # img_flat = img.view(img.shape[0], -1)
         img = self.main_module(img) # 64, 1024, 4, 4
         img = self.output(img) # 64, 1024, 1, 1
-        img_flat = torch.squeeze(img).view(img.shape[0], -1) # 64, 1024
+        # img_flat = torch.squeeze(img).view(img.shape[0], -1) # 64, 1024
         # img_vector = img.view(np.prod(img_shape))
-        validity = self.model(img_flat)
-        return validity
+        # validity = self.model(img_flat)
+        return img
 # %%
 # loss weight for gradient penalty 
 lambda_gp = 10
@@ -184,7 +196,7 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
     # get random interpolation between real and fake samples 
     interpolates = (alpha * real_samples + ((1 - alpha) * fake_samples)).requires_grad_(True)
     d_interpolates = D(interpolates)
-    fake = Tensor(real_samples.shape[0], 1).fill_(1.0)
+    fake = Tensor(real_samples.shape[0], 1, 1, 1).fill_(1.0)
     fake.requires_grad = True
 
     # get gradient w,r,t interpolates
@@ -203,6 +215,7 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
 # Training
 batches_done = 0
 print("Training start!")
+print(opt.__dict__)
 for epoch in range(opt.n_epochs):
     for i, (imgs, _) in enumerate(dataloader):
 
@@ -234,7 +247,7 @@ for epoch in range(opt.n_epochs):
         optimizer_D.step()
 
         writer.add_scalar("epoch/d_loss", d_loss, epoch)
-        writer.add_scalar("iter/dloss/" + str(epoch), d_loss, i)
+        # writer.add_scalar("iter/dloss/" + str(epoch), d_loss, i)
 
         optimizer_G.zero_grad()
 
@@ -254,9 +267,9 @@ for epoch in range(opt.n_epochs):
             optimizer_G.step()
 
             writer.add_scalar("epoch/g_loss", g_loss, epoch)
-            writer.add_scalar("iter/g_loss" + str(i % opt.n_critic), g_loss, i)
+            # writer.add_scalar("iter/g_loss" + str(i % opt.n_critic), g_loss, i)
             writer.add_scalars("epoch", {'g_loss':g_loss, 'd_loss':d_loss}, epoch)
-            writer.add_scalars("iter" + str(i % opt.n_critic), {'g_loss':g_loss, 'd_loss':d_loss}, i)          
+            writer.add_scalars("iter/" + str(i), {'g_loss':g_loss, 'd_loss':d_loss}, i)          
 
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
