@@ -232,11 +232,11 @@ for epoch in range(opt.n_epochs):
     train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
     train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
 
-    LossHistory.show_train_animation('./images/wgan/', save_name)
+    # LossHistory.show_train_animation('./images/wgan/', save_name)
 
 # %%
 writer.close()
-LossHistory.show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
+# LossHistory.show_train_hist(train_hist, save=True, path='./images/wgan/train_hist.png')
 
 
 

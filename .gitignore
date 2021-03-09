@@ -15,3 +15,4 @@ PyTorch/Pytorch_GAN/runs/
 PyTorch/GAN_implementatnion/w_dcgan/runs/
 PyTorch/GAN_implementatnion/w_dcgan/images/
 PyTorch/GAN_implementatnion/w_dcgan_gp/runs/
+PyTorch/Pytorch_GAN/wgan_gp_cifar
