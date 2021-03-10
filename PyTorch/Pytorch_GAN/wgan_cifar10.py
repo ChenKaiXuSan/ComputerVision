@@ -29,7 +29,7 @@ sys.path.append('/home/xchen/ComputerVision/utils')
 os.makedirs('images/wgan_cifar10', exist_ok=True)
 
 # output to ./runs/
-writer = SummaryWriter('./runs/cifar10')
+writer = SummaryWriter('runs/wgan_cifar10')
 # %%
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
