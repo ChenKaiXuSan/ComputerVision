@@ -30,7 +30,7 @@ os.makedirs("images/wgan_gp_cifar10", exist_ok=True)
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # %%
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=1000, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
@@ -191,8 +191,8 @@ for epoch in range(opt.n_epochs):
         d_loss.backward()
         optimizer_D.step()
 
-        writer.add_scalar("epoch", d_loss, epoch)
-        writer.add_scalar("iter", d_loss, i)
+        writer.add_scalar("epoch/d_loss", d_loss, epoch)
+        # writer.add_scalar("iter/d_loss", d_loss, i)
 
         optimizer_G.zero_grad()
 
@@ -211,10 +211,10 @@ for epoch in range(opt.n_epochs):
             g_loss.backward()
             optimizer_G.step()
 
-            writer.add_scalar("epoch", g_loss, epoch)
-            writer.add_scalar("iter", g_loss, i)
+            writer.add_scalar("epoch/g_loss", g_loss, epoch)
+            # writer.add_scalar("iter", g_loss, i)
             writer.add_scalars("epoch", {'g_loss':g_loss, 'd_loss':d_loss}, epoch)
-            writer.add_scalars("iter", {'g_loss':g_loss, 'd_loss':d_loss}, i)          
+            # writer.add_scalars("iter", {'g_loss':g_loss, 'd_loss':d_loss}, i)          
 
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
