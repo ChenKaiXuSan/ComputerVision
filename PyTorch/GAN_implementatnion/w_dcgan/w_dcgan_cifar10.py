@@ -24,11 +24,11 @@ shutil.rmtree("../images/wgan_cifar10")
 os.makedirs("../images/wgan_cifar10", exist_ok=True)
 
 # 设置gpu
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 # %%
 # 设置参数
 parser = argparse.ArgumentParser()
-parser.add_argument("--n_epochs", type=int, default=1000, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=500, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.00005, help="learning rate")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
@@ -257,6 +257,10 @@ for epoch in range(opt.n_epochs):
             # grid = torchvision.utils.make_grid(gen_imgs)
             # images.append(grid)
             # writer.add_images('images', grid, 0)
+
+            # save real image 
+            save_image(real_imgs.data[:25], '../images/wgan_cifar10/real_img.png', nrow=5, normalize=True)
+            # save fake image 
             save_image(gen_imgs.data[:25], '../images/wgan_cifar10/%d.png' % batch_done, nrow=5, normalize=True)
         batch_done += 1
 
