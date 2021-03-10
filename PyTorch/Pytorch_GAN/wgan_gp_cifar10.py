@@ -50,7 +50,7 @@ img_shape = (opt.channels, opt.img_size, opt.img_size)
 
 cuda = True if torch.cuda.is_available() else False
 
-writer = SummaryWriter('wgan_gp_cifar')
+writer = SummaryWriter('runs/wgan_gp_cifar10')
 # %%
 class Generator(nn.Module):
     def __init__(self):
@@ -222,7 +222,7 @@ for epoch in range(opt.n_epochs):
             )
             
             if batches_done % opt.sample_interval == 0:
-                save_image(fake_imgs.data[:25], "images/wgan_gp/%d.png" % batches_done, nrow=5, normalize=True)
+                save_image(fake_imgs.data[:25], "images/wgan_gp_cifar10/%d.png" % batches_done, nrow=5, normalize=True)
                 grid = torchvision.utils.make_grid(fake_imgs)
                 writer.add_image('fake image', grid, 0)
 
