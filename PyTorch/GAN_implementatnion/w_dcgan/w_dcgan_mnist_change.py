@@ -76,22 +76,22 @@ class Generator(nn.Module):
             nn.ReLU(True),
 
             # 1024, 4, 4
-            nn.ConvTranspose2d(1024, 512, 4, 2, 1),
+            nn.ConvTranspose2d(1024, 512, 4, 2, 1, bias=False),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
 
             # 512, 8, 8
-            nn.ConvTranspose2d(512, 256, 4, 2, 1),
+            nn.ConvTranspose2d(512, 256, 4, 2, 1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
 
             # 256, 16, 16
-            nn.ConvTranspose2d(256, 128, 4, 2, 1),
+            nn.ConvTranspose2d(256, 128, 4, 2, 1, bias=False),
             nn.BatchNorm2d(128),
             nn.ReLU(True),
 
             # 128, 32, 32
-            nn.ConvTranspose2d(128, 64, 4, 2, 1),
+            nn.ConvTranspose2d(128, 64, 4, 2, 1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
 
@@ -113,27 +113,27 @@ class Discriminator(nn.Module):
 
         self.main_module = nn.Sequential(
             # image c, 128, 128
-            nn.Conv2d(opt.channels, 64, 4, 2, 1),
+            nn.Conv2d(opt.channels, 64, 4, 2, 1, bias=False),
             nn.BatchNorm2d(64),
             nn.LeakyReLU(0.2, inplace=True),
             
             # 64, 64, 64
-            nn.Conv2d(64, 128, 4, 2, 1),
+            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
             nn.BatchNorm2d(128),
             nn.LeakyReLU(0.2, inplace=True),
 
             # 128, 32, 32
-            nn.Conv2d(128, 256, 4, 2, 1),
+            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
             nn.BatchNorm2d(256),
             nn.LeakyReLU(0.2, inplace=True),
 
             # state 256, 16, 16
-            nn.Conv2d(256, 512, 4, 2, 1),
+            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
             nn.BatchNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True),
 
             # state 512, 8, 8
-            nn.Conv2d(512, 1024, 4, 2, 1),
+            nn.Conv2d(512, 1024, 4, 2, 1, bias=False),
             nn.BatchNorm2d(1024),
             nn.LeakyReLU(0.2, inplace=True)
         )
@@ -141,14 +141,14 @@ class Discriminator(nn.Module):
 
         self.output = nn.Sequential(
             # do not apply sigmoid
-            nn.Conv2d(1024, 1, 4, 1, 0)
+            nn.Conv2d(1024, 1, 4, 1, 0, bias=False)
         )
 
     def forward(self, img):
         img = self.main_module(img)
         img = self.output(img)
         img = img.mean(0)
-        return img.view(-1)
+        return img.view(1)
 
 # %%
 import random
@@ -208,6 +208,9 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # %%
 # Training
 batch_done = 0
+print(generator)
+print(discriminator)
+
 print('Training start!')
 for epoch in range(opt.n_epochs):
     
@@ -219,8 +222,6 @@ for epoch in range(opt.n_epochs):
         
         input.resize_as_(real_imgs).copy_(real_imgs)
         inputv = input.clone().detach().requires_grad_(True)
-        # inputv = torch.tensor(input, requires_grad=True)
-        # input.requires_grad = True
 
         # reset requires_grad
         for p in discriminator.parameters():
@@ -228,6 +229,7 @@ for epoch in range(opt.n_epochs):
 
 
         # train discriminator
+
         optimizer_D.zero_grad()
 
         # train with real
@@ -236,9 +238,7 @@ for epoch in range(opt.n_epochs):
 
         # train with fake
         noise.resize_(opt.batch_size, opt.latent_dim, 1, 1).normal_(0, 1)
-        # noise.requires_grad = True
         noisev = noise.clone().detach().requires_grad_(True)
-        # noisev = torch.tensor(noise, requires_grad=True)
 
         # generate a batch of images 
         fake = generator(noisev).data
