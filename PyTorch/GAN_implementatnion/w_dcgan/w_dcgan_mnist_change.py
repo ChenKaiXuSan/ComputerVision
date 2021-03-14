@@ -164,7 +164,7 @@ cudnn.benchmark = True
 generator = Generator()
 discriminator = Discriminator()
 
-input = torch.FloatTensor(opt.batch_size, 3, opt.img_size, opt.img_size)
+input = torch.FloatTensor(opt.batch_size, opt.latent_dim, opt.img_size, opt.img_size)
 noise = torch.FloatTensor(opt.batch_size, opt.latent_dim, 1, 1)
 fixed_noise = torch.FloatTensor(opt.batch_size, opt.latent_dim, 1, 1).normal_(0, 1)
 one = torch.FloatTensor([1])
@@ -299,6 +299,8 @@ for epoch in range(opt.n_epochs):
         # 每400个图片保存一次生成的图片
         if batch_done % opt.sample_interval == 0:
             save_image(input.data[:25], '../images/w_dcgan_mnist/real_img.png', nrow=5, normalize=True)
+            # 把固定的noise放到generator里面生成fake image
+            fake = generator(fixed_noise)
             save_image(fake.data[:25], '../images/w_dcgan_mnist/%d.png' % batch_done, nrow=5, normalize=True)
         batch_done += 1
 
