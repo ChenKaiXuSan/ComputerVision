@@ -18,6 +18,8 @@ import torch.autograd as autograd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
+
+from dataset import *
 # %%
 os.makedirs("images/wgan_div", exist_ok=True)
 
@@ -34,6 +36,8 @@ parser.add_argument("--channels", type=int, default=1, help="number of image cha
 parser.add_argument("--n_critic", type=int, default=5, help="number of training steps for discriminator per iter")
 parser.add_argument("--clip_value", type=float, default=0.01, help="lower and upper clip value for disc. weights")
 parser.add_argument("--sample_interval", type=int, default=400, help="interval betwen image samples")
+parser.add_argument('--dataset', type=str, default='fashion', choices=['mnist', 'cifar10', 'fashion'])
+parser.add_argument('--dataroot', type=str, default='../data')
 opt = parser.parse_args([])
 print(opt)
 
@@ -98,25 +102,33 @@ if cuda:
 
 # %%
 # configure data loader 
-dst = datasets.MNIST(
-    "../data",
-    train=True,
-    download=False,
-    transform=transforms.Compose(
-        [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
-    ),
-)
+# dst = datasets.MNIST(
+#     "../data",
+#     train=True,
+#     download=False,
+#     transform=transforms.Compose(
+#         [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+#     ),
+# )
 
-dataloader = DataLoader(
-    dst,
-    batch_size=opt.batch_size,
-    shuffle=True,
-)
+# dataloader = DataLoader(
+#     dst,
+#     batch_size=opt.batch_size,
+#     shuffle=True,
+# )
+
+dataloader = getdDataset(opt)
+# %%
+def build_tensorboard():
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter('runs/wgan_div')
+    return writer
 # %%
 # optimizers 
 optimizer_G = optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 optimizer_D = optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 
+# writer = build_tensorboard()
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # %%
 # training 
@@ -169,7 +181,7 @@ for epoch in range(opt.n_epochs):
         d_loss.backward()
         optimizer_D.step()
 
-        writer.add_scalar('epoch', d_loss, epoch)
+        writer.add_scalar('epoch_d_loss', d_loss, epoch)
 
         optimizer_G.zero_grad()
 
@@ -188,7 +200,7 @@ for epoch in range(opt.n_epochs):
             g_loss.backward()
             optimizer_G.step()
 
-            writer.add_scalar('epoch', g_loss, epoch)
+            writer.add_scalar('epoch_g_loss', g_loss, epoch)
 
             print(
                 "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
