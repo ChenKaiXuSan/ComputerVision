@@ -208,7 +208,7 @@ for epoch in range(opt.n_epochs):
             )
 
             if batch_done % opt.sample_interval == 0:
-                save_image(fake_imgs.data[:25], "images/%d.png" % batch_done, nrow=5, normalize=True)
+                save_image(fake_imgs.data[:25], "images/wgan_div/%d.png" % batch_done, nrow=5, normalize=True)
 
             grid = torchvision.utils.make_grid(fake_imgs)
             writer.add_image('fake image', grid, 0)
